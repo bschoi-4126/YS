@@ -12,9 +12,12 @@
     <style>
         @font-face { font-family: 'Pretendard-Regular'; src: url('https://cdn.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-Regular.woff') format('woff'); }
         body { font-family: 'Pretendard-Regular', sans-serif; -webkit-tap-highlight-color: transparent; user-select: none; }
-        .app-container { max-width: 500px; margin: 0 auto; height: 100vh; display: flex; flex-direction: column; }
-        .content-area { flex: 1; overflow-y: auto; padding-bottom: 100px; }
-        .nav-bar { position: fixed; bottom: 0; left: 0; right: 0; max-width: 500px; margin: 0 auto; background: white; border-top: 1px solid #f1f5f9; display: flex; justify-content: space-around; padding: 12px 0 24px 0; z-index: 100; box-shadow: 0 -4px 6px -1px rgb(0 0 0 / 0.1); }
+        .app-container { max-width: 500px; margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column; }
+        
+        /* [수정] 하단 네비게이션 바 높이를 고려하여 여백을 넉넉히 줌 (짤림 방지) */
+        .content-area { flex: 1; overflow-y: auto; padding-bottom: 180px; }
+        
+        .nav-bar { position: fixed; bottom: 0; left: 0; right: 0; max-width: 500px; margin: 0 auto; background: white; border-top: 1px solid #f1f5f9; display: flex; justify-content: space-around; padding: 12px 0 24px 0; z-index: 100; box-shadow: 0 -4px 10px rgba(0,0,0,0.05); }
         .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: #94a3b8; font-size: 10px; font-weight: 700; width: 25%; }
         .nav-item.active { color: #3b82f6; }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
@@ -37,7 +40,7 @@
 
         <main class="content-area p-4 space-y-4">
             <div class="bg-slate-900 rounded-[2rem] p-8 text-white shadow-xl relative overflow-hidden">
-                <p class="text-[10px] opacity-50 font-bold tracking-widest mb-1 uppercase">Total Balance</p>
+                <p class="text-[10px] opacity-50 font-bold tracking-widest mb-1 uppercase text-slate-400">Total Balance</p>
                 <div class="text-4xl font-black text-green-400" id="totalBalance">0원</div>
                 <i class="fa-solid fa-coins absolute -right-4 -bottom-4 text-8xl opacity-10"></i>
             </div>
@@ -55,15 +58,16 @@
 
             <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
                 <h2 class="font-bold text-xs text-slate-400 mb-4 flex justify-between items-center uppercase tracking-widest">
-                    <span><i class="fa-solid fa-clock-rotate-left mr-2"></i>누적 미납 명단 (현재 기준)</span>
-                    <span id="unpaidSummaryCount" class="bg-red-50 text-red-500 px-2 py-0.5 rounded-full text-[10px] font-black">0</span>
+                    <span><i class="fa-solid fa-clock-rotate-left mr-2 text-indigo-400"></i>Arrears (Today)</span>
+                    <span id="unpaidSummaryCount" class="bg-red-50 text-red-500 px-2 py-0.5 rounded-full text-[10px] font-black shadow-inner">0</span>
                 </h2>
                 <div id="unpaidList" class="space-y-3"></div>
             </div>
 
-            <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 min-h-[400px]">
-                <h3 class="font-bold text-slate-800 mb-5 text-sm uppercase tracking-widest">📅 <span id="monthLabel"></span> 상세 내역</h3>
-                <div id="monthlyLogs" class="space-y-4 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar"></div>
+            <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
+                <h3 class="font-bold text-slate-800 mb-5 text-sm uppercase tracking-widest border-b pb-3">📅 <span id="monthLabel"></span> 상세 내역</h3>
+                <div id="monthlyLogs" class="space-y-4">
+                    </div>
             </div>
         </main>
 
@@ -76,9 +80,9 @@
     </div>
 
     <div id="actionSection" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[200] flex items-end">
-        <div class="bg-white w-full rounded-t-[2.5rem] p-8 animate-slide-up max-h-[85vh] overflow-y-auto">
+        <div class="bg-white w-full rounded-t-[2.5rem] p-8 animate-slide-up max-h-[85vh] overflow-y-auto shadow-2xl">
             <div id="sectionContent"></div>
-            <button onclick="hideSection()" class="w-full mt-6 py-4 bg-gray-100 rounded-2xl font-bold text-gray-400">닫기</button>
+            <button onclick="hideSection()" class="w-full mt-6 py-4 bg-slate-50 rounded-2xl font-bold text-slate-400 hover:bg-slate-100 transition">닫기</button>
         </div>
     </div>
 
@@ -116,18 +120,17 @@
                     <div><span class="font-bold text-slate-700 text-sm">${u.name}</span><p class="text-[9px] text-red-400 font-medium">${u.months.slice(-3).join(', ')} 미납</p></div>
                     <span class="bg-red-500 text-white text-[10px] px-2 py-1 rounded-lg font-black">${u.months.length}회</span>
                 </div>
-            `).join('') || '<p class="text-center text-emerald-500 font-bold text-xs py-2">완납 중! ⚽</p>';
+            `).join('') || '<p class="text-center text-emerald-500 font-bold text-xs py-2 tracking-wide">모두 완납 중! ⚽</p>';
 
-            // 최신 내역이 위로 오도록 렌더링
             document.getElementById('monthlyLogs').innerHTML = appData.monthlyLogs.map(l => `
                 <div class="flex justify-between items-center border-b border-slate-50 pb-4">
                     <div class="flex gap-4 items-center">
-                        <div onclick="deleteLog('${l.logType}', '${l.id}', '${l.detail}', ${l.amount}, '${l.type}')" class="text-red-500 hover:text-red-700 transition cursor-pointer px-2 py-1 bg-red-50 rounded-lg">
-                            <i class="fa-solid fa-trash-can text-sm"></i>
+                        <div onclick="deleteLog('${l.logType}', '${l.id}', '${l.detail}', ${l.amount}, '${l.type}')" class="text-red-500 hover:text-red-700 transition cursor-pointer p-2 bg-red-50 rounded-xl">
+                            <i class="fa-solid fa-trash-can text-xs"></i>
                         </div>
                         <div>
                             <p class="font-bold text-slate-700 text-sm">${l.detail}</p>
-                            <p class="text-[10px] text-slate-300">${l.date.toString().split('T')[0]}</p>
+                            <p class="text-[10px] text-slate-300 font-medium">${l.date.toString().split('T')[0]}</p>
                         </div>
                     </div>
                     <div class="${l.type === '수입' ? 'text-blue-600' : 'text-red-600'} font-black text-sm text-right">
@@ -137,11 +140,11 @@
             `).join('') || '<p class="text-center text-slate-300 py-10 text-xs italic">내역 없음</p>';
         }
 
+        // [수정] 입력 후 hideSection()이 반드시 실행되도록 보장
         async function submitMultiPay() {
             const selected = Array.from(document.querySelectorAll('input[name="payMember"]:checked')).map(el => el.value);
             if(selected.length === 0) return alert('인원을 선택하세요.');
 
-            // [즉각 반영] UI 최상단에 추가 (unshift)
             selected.forEach(name => {
                 const member = appData.unpaidSummary.find(u => u.name === name);
                 if(member) {
@@ -152,12 +155,13 @@
                     appData.monthlyLogs.unshift({ id: Date.now(), date: '회비', type: '수입', detail: `${name} 회비`, amount: 10000, logType: 'fee' });
                 }
             });
-            renderUI(); hideSection();
+            renderUI(); 
+            hideSection(); // 즉시 창 닫기
 
             try {
                 await fetch(`${API_URL}?action=recordMultiPayments&names=${JSON.stringify(selected)}&year=${yearSel.value}&month=${monthSel.value}`);
                 fetchData();
-            } catch(e) { alert("서버 저장 실패"); fetchData(); }
+            } catch(e) { fetchData(); }
         }
 
         async function addTr() {
@@ -167,33 +171,31 @@
             const date = document.getElementById('trDate').value;
             if(!detail || !amount) return alert('내용과 금액을 입력하세요.');
 
-            // [즉각 반영] UI 최상단에 추가 (unshift)
             appData.totalBalance += (type === '수입' ? amount : -amount);
             if(new Date(date).getFullYear() == yearSel.value) {
                 if(type === '수입') appData.yearlyIncome += amount;
                 else appData.yearlyExpense += amount;
             }
             appData.monthlyLogs.unshift({ id: Date.now(), date: date, type: type, detail: detail, amount: amount, logType: 'trans' });
-            renderUI(); hideSection();
+            renderUI(); 
+            hideSection(); // 즉시 창 닫기
 
             try {
                 await fetch(`${API_URL}?action=addTransaction&type=${type}&detail=${detail}&amount=${amount}&date=${date}`);
                 fetchData();
-            } catch(e) { alert("저장 실패"); fetchData(); }
+            } catch(e) { fetchData(); }
         }
 
         async function deleteLog(logType, id, detail, amount, type) {
             if(!confirm(`[${detail}] 삭제할까요?`)) return;
-
             appData.monthlyLogs = appData.monthlyLogs.filter(l => l.id != id);
             appData.totalBalance -= (type === '수입' ? amount : -amount);
             if(type === '수입') appData.yearlyIncome -= amount; else appData.yearlyExpense -= amount;
             renderUI();
-
             try {
                 await fetch(`${API_URL}?action=deleteLog&type=${logType}&id=${id}`);
                 fetchData();
-            } catch(e) { alert("삭제 실패"); fetchData(); }
+            } catch(e) { fetchData(); }
         }
 
         async function addMem() {
@@ -201,11 +203,12 @@
             const date = document.getElementById('joinDate').value;
             if(!name) return;
             appData.members.push({ name, joinDate: date, status: '활동' });
-            renderUI(); hideSection();
+            renderUI(); 
+            hideSection(); // 즉시 창 닫기
             try {
                 await fetch(`${API_URL}?action=addMember&name=${name}&joinDate=${date}`);
                 fetchData();
-            } catch(e) { alert("추가 실패"); fetchData(); }
+            } catch(e) { fetchData(); }
         }
 
         async function updateStatus(name, status) {
@@ -215,7 +218,7 @@
             try {
                 await fetch(`${API_URL}?action=updateStatus&name=${name}&status=${status}`);
                 fetchData();
-            } catch(e) { alert("상태 변경 실패"); fetchData(); }
+            } catch(e) { fetchData(); }
         }
 
         function showSection(type) {
@@ -227,19 +230,19 @@
                 const targetUnpaid = appData.unpaidSummary.filter(u => u.isTargetUnpaid && u.status === '활동');
                 content.innerHTML = `<h3 class="font-black text-xl mb-4">${monthSel.value}월 회비 체크</h3><div class="grid grid-cols-2 gap-2 mb-6">
                 ${targetUnpaid.map(u => `<label class="cursor-pointer"><input type="checkbox" name="payMember" value="${u.name}" class="hidden peer">
-                <span class="flex items-center justify-center p-4 border rounded-2xl bg-slate-50 font-bold text-sm peer-checked:border-emerald-500 peer-checked:bg-emerald-50 peer-checked:text-emerald-700">${u.name}</span></label>`).join('') || '<p class="col-span-2 text-center py-10 text-slate-300">납부할 인원이 없습니다.</p>'}
-                </div><button onclick="submitMultiPay()" class="w-full bg-emerald-500 text-white py-5 rounded-2xl font-black shadow-lg">납부 저장</button>`;
+                <span class="flex items-center justify-center p-4 border-2 border-slate-50 rounded-2xl bg-slate-50 font-bold text-sm transition peer-checked:border-emerald-500 peer-checked:bg-emerald-50 peer-checked:text-emerald-700">${u.name}</span></label>`).join('') || '<p class="col-span-2 text-center py-10 text-slate-300">미납자가 없습니다.</p>'}
+                </div><button onclick="submitMultiPay()" class="w-full bg-emerald-500 text-white py-5 rounded-2xl font-black shadow-lg active:scale-95 transition">납부 완료</button>`;
             } else if (type === 'income') {
                 content.innerHTML = `<h3 class="font-black text-xl mb-6">기타 입출금</h3><div class="space-y-4"><div class="flex gap-2 bg-slate-100 p-1 rounded-2xl">
                 <button id="btnIn" onclick="setTrType('수입')" class="flex-1 py-3 rounded-xl font-black active-tab">수입</button><button id="btnOut" onclick="setTrType('지출')" class="flex-1 py-3 rounded-xl font-black">지출</button></div>
                 <input id="trDate" type="date" class="w-full bg-slate-50 p-4 rounded-xl border-none font-bold outline-none" value="${new Date().toISOString().split('T')[0]}">
                 <input id="trDetail" class="w-full bg-slate-50 p-4 rounded-xl border-none font-bold outline-none" placeholder="내역">
                 <input id="trAmount" type="number" class="w-full bg-slate-50 p-4 rounded-xl border-none font-bold outline-none" placeholder="금액">
-                <button onclick="addTr()" class="w-full bg-slate-900 text-white py-5 rounded-2xl font-black shadow-xl">저장하기</button></div>`; window.trType = '수입';
+                <button onclick="addTr()" class="w-full bg-slate-900 text-white py-5 rounded-2xl font-black shadow-xl active:scale-95 transition">저장하기</button></div>`; window.trType = '수입';
             } else if (type === 'members') {
                 content.innerHTML = `<h3 class="font-black text-xl mb-6">멤버 관리</h3><div class="bg-blue-50 p-5 rounded-3xl mb-6"><input id="newMem" class="w-full p-4 rounded-2xl mb-2 border-none font-bold outline-none" placeholder="이름">
-                <input id="joinDate" type="month" class="w-full p-4 rounded-2xl mb-2 border-none font-bold outline-none" value="2025-01"><button onclick="addMem()" class="w-full bg-blue-600 text-white py-3 rounded-xl font-black">추가</button></div>
-                <div class="space-y-2 max-h-60 overflow-y-auto custom-scrollbar">${appData.members.map(m => `<div class="flex justify-between items-center p-4 border rounded-2xl"><span class="font-bold text-sm text-slate-600">${m.name}</span>
+                <input id="joinDate" type="month" class="w-full p-4 rounded-2xl mb-2 border-none font-bold outline-none" value="2025-01"><button onclick="addMem()" class="w-full bg-blue-600 text-white py-3 rounded-xl font-black active:scale-95 transition">추가</button></div>
+                <div class="space-y-2 pr-2 max-h-60 overflow-y-auto custom-scrollbar">${appData.members.map(m => `<div class="flex justify-between items-center p-4 border rounded-2xl"><span class="font-bold text-sm text-slate-600">${m.name}</span>
                 <div class="flex items-center gap-2"><select onchange="updateStatus('${m.name}', this.value)" class="text-[10px] font-bold bg-slate-100 rounded-lg p-2 outline-none"><option value="활동" ${m.status==='활동'?'selected':''}>활동</option><option value="휴식" ${m.status==='휴식'?'selected':''}>휴식</option></select>
                 <i onclick="delMem('${m.name}')" class="fa-solid fa-circle-xmark text-slate-300 ml-1 text-lg cursor-pointer"></i></div></div>`).join('')}</div>`;
             }
