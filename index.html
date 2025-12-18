@@ -14,7 +14,7 @@
         body { font-family: 'Pretendard-Regular', sans-serif; -webkit-tap-highlight-color: transparent; user-select: none; }
         .app-container { max-width: 500px; margin: 0 auto; height: 100vh; display: flex; flex-direction: column; }
         .content-area { flex: 1; overflow-y: auto; padding-bottom: 100px; }
-        .nav-bar { position: fixed; bottom: 0; left: 0; right: 0; max-width: 500px; margin: 0 auto; background: white; border-top: 1px solid #f1f5f9; display: flex; justify-content: space-around; padding: 12px 0 24px 0; z-index: 100; shadow: 0 -4px 6px -1px rgb(0 0 0 / 0.1); }
+        .nav-bar { position: fixed; bottom: 0; left: 0; right: 0; max-width: 500px; margin: 0 auto; background: white; border-top: 1px solid #f1f5f9; display: flex; justify-content: space-around; padding: 12px 0 24px 0; z-index: 100; box-shadow: 0 -4px 6px -1px rgb(0 0 0 / 0.1); }
         .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: #94a3b8; font-size: 10px; font-weight: 700; width: 25%; }
         .nav-item.active { color: #3b82f6; }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
@@ -40,10 +40,21 @@
                 <i class="fa-solid fa-coins absolute -right-4 -bottom-4 text-8xl opacity-10"></i>
             </div>
 
+            <div class="grid grid-cols-2 gap-3">
+                <div class="bg-white rounded-3xl p-5 shadow-sm border border-blue-50">
+                    <p class="text-[10px] text-blue-500 font-bold mb-1 uppercase tracking-tighter" id="yearlyIncomeTitle">연간 총 수입</p>
+                    <p class="text-lg font-black text-slate-800" id="yearlyIncome">0원</p>
+                </div>
+                <div class="bg-white rounded-3xl p-5 shadow-sm border border-red-50">
+                    <p class="text-[10px] text-red-500 font-bold mb-1 uppercase tracking-tighter" id="yearlyExpenseTitle">연간 총 지출</p>
+                    <p class="text-lg font-black text-slate-800" id="yearlyExpense">0원</p>
+                </div>
+            </div>
+
             <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
                 <h2 class="font-bold text-xs text-slate-400 mb-4 flex justify-between items-center">
                     <span><i class="fa-solid fa-clock-rotate-left mr-2"></i>누적 미납 명단</span>
-                    <span id="unpaidSummaryCount" class="bg-red-50 text-red-500 px-2 py-0.5 rounded-full">0</span>
+                    <span id="unpaidSummaryCount" class="bg-red-50 text-red-500 px-2 py-0.5 rounded-full text-[10px] font-black">0</span>
                 </h2>
                 <div id="unpaidList" class="space-y-3"></div>
             </div>
@@ -88,12 +99,19 @@
         const now = new Date();
         const yearSel = document.getElementById('viewYear');
         const monthSel = document.getElementById('viewMonth');
-        for(let i=2025; i<=2026; i++) yearSel.innerHTML += `<option value="${i}" ${i==now.getFullYear()?'selected':''}>${i}년</option>`;
-        for(let i=1; i<=12; i++) monthSel.innerHTML += `<option value="${i}" ${i==now.getMonth()+1?'selected':''}>${i}월</option>`;
+        
+        for(let i=2025; i<=2030; i++) {
+            yearSel.innerHTML += `<option value="${i}" ${i==now.getFullYear()?'selected':''}>${i}년</option>`;
+        }
+        for(let i=1; i<=12; i++) {
+            monthSel.innerHTML += `<option value="${i}" ${i==now.getMonth()+1?'selected':''}>${i}월</option>`;
+        }
 
         async function fetchData() {
             const y = yearSel.value; const m = monthSel.value;
             document.getElementById('monthLabel').innerText = `${m}월`;
+            document.getElementById('yearlyIncomeTitle').innerText = `${y}년 총 수입`;
+            document.getElementById('yearlyExpenseTitle').innerText = `${y}년 총 지출`;
             document.getElementById('monthlyLogs').innerHTML = '<p class="text-center py-10 text-xs text-slate-300 italic">로딩 중...</p>';
             try {
                 const resp = await fetch(`${API_URL}?action=getData&year=${y}&month=${m}`);
@@ -104,6 +122,8 @@
 
         function renderUI() {
             document.getElementById('totalBalance').innerText = (appData.totalBalance || 0).toLocaleString() + '원';
+            document.getElementById('yearlyIncome').innerText = (appData.yearlyIncome || 0).toLocaleString() + '원';
+            document.getElementById('yearlyExpense').innerText = (appData.yearlyExpense || 0).toLocaleString() + '원';
             document.getElementById('unpaidSummaryCount').innerText = appData.unpaidSummary.length;
             
             document.getElementById('unpaidList').innerHTML = appData.unpaidSummary.map(u => `
@@ -124,7 +144,6 @@
                     </div>
                     <div class="${l.type === '수입' ? 'text-blue-600' : 'text-red-600'} font-black text-sm text-right">
                         ${l.type === '수입' ? '+' : '-'}${Number(l.amount).toLocaleString()}
-                        <p class="text-[9px] opacity-30 font-normal text-black">${l.type}</p>
                     </div>
                 </div>
             `).join('') || '<p class="text-center text-slate-300 py-10 text-xs italic">내역 없음</p>';
@@ -134,6 +153,7 @@
             const section = document.getElementById('actionSection');
             const content = document.getElementById('sectionContent');
             section.classList.remove('hidden');
+            history.pushState({ section: type }, '');
 
             if (type === 'payment') {
                 const thisMonthStr = `${yearSel.value}-${monthSel.value}`;
@@ -231,7 +251,20 @@
             hideSection(); fetchData();
         }
 
-        function hideSection() { document.getElementById('actionSection').classList.add('hidden'); }
+        function hideSection(isPopState = false) {
+            document.getElementById('actionSection').classList.add('hidden');
+            if (!isPopState && history.state && history.state.section) {
+                history.back();
+            }
+        }
+
+        window.onpopstate = function(event) {
+            const section = document.getElementById('actionSection');
+            if (!section.classList.contains('hidden')) {
+                hideSection(true);
+            }
+        };
+
         window.onload = fetchData;
     </script>
 </body>
