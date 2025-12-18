@@ -1,80 +1,159 @@
 <!DOCTYPE html>
-<html>
+<html lang="ko">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>풋살 회비 관리 시스템</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
-<body class="bg-gray-100 min-h-screen p-4">
-    <div class="max-w-md mx-auto space-y-4">
+<body class="bg-slate-50 min-h-screen pb-20">
+    <div class="max-w-md mx-auto p-4 space-y-4">
         
-        <div class="bg-blue-600 rounded-2xl p-6 text-white shadow-lg">
-            <h1 class="text-sm opacity-80">현재 총 잔액</h1>
-            <div class="text-3xl font-bold mt-1" id="balance">0원</div>
-            <div class="mt-4 flex justify-between text-sm border-t border-blue-400 pt-4">
-                <div>이번달 미납: <span id="unpaidCount" class="font-bold text-yellow-300">0</span>명</div>
-                <div id="dateNow"></div>
+        <div class="bg-gradient-to-br from-indigo-600 to-blue-500 rounded-3xl p-6 text-white shadow-xl">
+            <h1 class="text-sm font-medium opacity-90">현재 총 잔액</h1>
+            <div class="text-4xl font-black mt-2" id="balance">0원</div>
+            <div class="mt-6 flex justify-between items-center bg-white/10 rounded-2xl p-4">
+                <div>
+                    <p class="text-[10px] uppercase tracking-wider opacity-70">이번 달 미납</p>
+                    <p class="text-lg font-bold text-yellow-300"><span id="unpaidCount">0</span>명</p>
+                </div>
+                <button onclick="fetchData()" class="bg-white/20 hover:bg-white/30 p-2 rounded-full transition">
+                    <i class="fa-solid fa-rotate text-sm"></i>
+                </button>
             </div>
         </div>
 
-        <div class="bg-white rounded-xl p-5 shadow-sm">
-            <h2 class="font-bold text-gray-700 mb-3"><i class="fa-solid fa-circle-exclamation text-red-500 mr-2"></i>미납 회원</h2>
-            <div id="unpaidList" class="flex flex-wrap gap-2 text-sm text-gray-600">
-                로딩 중...
+        <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+            <h2 class="text-sm font-bold text-gray-400 uppercase tracking-widest mb-3 flex items-center">
+                <i class="fa-solid fa-circle-exclamation text-red-500 mr-2"></i>미납 명단
+            </h2>
+            <div id="unpaidList" class="flex flex-wrap gap-2 text-sm">
+                <span class="text-gray-400 italic">데이터를 불러오는 중...</span>
             </div>
         </div>
 
         <div class="grid grid-cols-2 gap-3">
-            <button onclick="openModal('member')" class="bg-white p-4 rounded-xl shadow-sm text-center hover:bg-gray-50 transition">
-                <i class="fa-solid fa-user-plus text-blue-500 mb-1"></i>
-                <div class="text-xs font-semibold">회원 관리</div>
+            <button onclick="showSection('members')" class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center">
+                <div class="w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center mb-2">
+                    <i class="fa-solid fa-users text-blue-500"></i>
+                </div>
+                <span class="text-xs font-bold text-gray-600">회원 관리</span>
             </button>
-            <button onclick="openModal('fee')" class="bg-white p-4 rounded-xl shadow-sm text-center hover:bg-gray-50 transition">
-                <i class="fa-solid fa-hand-holding-dollar text-green-500 mb-1"></i>
-                <div class="text-xs font-semibold">회비 납부</div>
+            <button onclick="showSection('payment')" class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center">
+                <div class="w-10 h-10 bg-green-50 rounded-full flex items-center justify-center mb-2">
+                    <i class="fa-solid fa-won-sign text-green-500"></i>
+                </div>
+                <span class="text-xs font-bold text-gray-600">회비 납부</span>
             </button>
-            <button onclick="openModal('transaction')" class="bg-white p-4 rounded-xl shadow-sm text-center hover:bg-gray-50 transition">
-                <i class="fa-solid fa-receipt text-orange-500 mb-1"></i>
-                <div class="text-xs font-semibold">기타 입출금</div>
+            <button onclick="showSection('income')" class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center">
+                <div class="w-10 h-10 bg-orange-50 rounded-full flex items-center justify-center mb-2">
+                    <i class="fa-solid fa-arrow-down-long text-orange-500"></i>
+                </div>
+                <span class="text-xs font-bold text-gray-600">수입/지출</span>
             </button>
-            <button onclick="init()" class="bg-white p-4 rounded-xl shadow-sm text-center hover:bg-gray-50 transition">
-                <i class="fa-solid fa-rotate text-purple-500 mb-1"></i>
-                <div class="text-xs font-semibold">새로고침</div>
+            <button onclick="showSection('history')" class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center">
+                <div class="w-10 h-10 bg-purple-50 rounded-full flex items-center justify-center mb-2">
+                    <i class="fa-solid fa-list-ul text-purple-500"></i>
+                </div>
+                <span class="text-xs font-bold text-gray-600">전체 내역</span>
             </button>
         </div>
 
-        <div class="bg-white rounded-xl p-5 shadow-sm">
-            <h2 class="font-bold text-gray-700 mb-3">최근 입출금 내역</h2>
-            <div id="recentLogs" class="space-y-3 text-sm">
-                </div>
+        <div id="actionSection" class="hidden bg-white rounded-2xl p-6 shadow-2xl border border-gray-200 fixed inset-x-4 bottom-20 z-50">
+            <div id="sectionContent"></div>
+            <button onclick="hideSection()" class="mt-4 w-full py-3 text-gray-400 text-sm font-medium">닫기</button>
         </div>
     </div>
 
     <script>
-        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbz3rsxELn2976--EQv27UarheFevKKpdPskF1viJ4AvZ2-Tizc78kbbcWmopXIQsG4Azw/exec';
+        // 1. 배포한 구글 웹 앱 URL을 여기에 입력하세요
+        const API_URL = 'https://script.google.com/macros/s/AKfycbz3rsxELn2976--EQv27UarheFevKKpdPskF1viJ4AvZ2-Tizc78kbbcWmopXIQsG4Azw/exec';
 
-        async function init() {
-            // 구글 앱스 스크립트와 통신하여 데이터 호출
-            google.script.run.withSuccessHandler(renderData).getData();
+        let appData = {};
+
+        async function fetchData() {
+            try {
+                const response = await fetch(`${API_URL}?action=getData`);
+                appData = await response.json();
+                renderUI();
+            } catch (e) { alert('데이터 로드 실패: ' + e); }
         }
 
-        function renderData(data) {
-            document.getElementById('balance').innerText = data.balance.toLocaleString() + '원';
-            document.getElementById('unpaidCount').innerText = data.unpaidMembers.length;
-            document.getElementById('unpaidList').innerHTML = data.unpaidMembers.length > 0 ? 
-                data.unpaidMembers.map(m => `<span class="bg-red-100 text-red-600 px-2 py-1 rounded">${m}</span>`).join('') : "모두 납부 완료! 🎉";
+        function renderUI() {
+            document.getElementById('balance').innerText = appData.balance.toLocaleString() + '원';
+            document.getElementById('unpaidCount').innerText = appData.unpaidMembers.length;
             
-            document.getElementById('recentLogs').innerHTML = data.transactions.map(t => `
-                <div class="flex justify-between border-b pb-2">
-                    <span>${t[2]}</span>
-                    <span class="${t[1] === '수입' ? 'text-blue-500' : 'text-red-500'} font-bold">
-                        ${t[1] === '수입' ? '+' : '-'}${t[3].toLocaleString()}
-                    </span>
-                </div>
-            `).join('');
+            const unpaidHtml = appData.unpaidMembers.length > 0 
+                ? appData.unpaidMembers.map(m => `<span class="bg-red-50 text-red-500 px-3 py-1.5 rounded-lg font-medium border border-red-100">${m}</span>`).join('')
+                : '<span class="text-green-500 font-bold">이번 달 완납! ⚽</span>';
+            document.getElementById('unpaidList').innerHTML = unpaidHtml;
         }
 
-        // 초기 실행
-        window.onload = init;
+        async function runAction(params) {
+            const query = new URLSearchParams(params).toString();
+            await fetch(`${API_URL}?${query}`);
+            hideSection();
+            fetchData();
+        }
+
+        function showSection(type) {
+            const section = document.getElementById('actionSection');
+            const content = document.getElementById('sectionContent');
+            section.classList.remove('hidden');
+
+            if (type === 'members') {
+                content.innerHTML = `
+                    <h3 class="font-bold mb-4">회원 추가/삭제</h3>
+                    <input id="memName" class="w-full border p-3 rounded-xl mb-3" placeholder="이름 입력">
+                    <button onclick="runAction({action:'addMember', name:document.getElementById('memName').value})" class="w-full bg-blue-500 text-white py-3 rounded-xl font-bold mb-4">추가하기</button>
+                    <div class="max-h-40 overflow-y-auto space-y-2">
+                        ${appData.members.map(m => `
+                            <div class="flex justify-between items-center p-2 bg-gray-50 rounded-lg text-sm">
+                                <span>${m}</span>
+                                <button onclick="runAction({action:'deleteMember', name:'${m}'})" class="text-red-400 px-2 italic text-xs">삭제</button>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            } else if (type === 'payment') {
+                content.innerHTML = `
+                    <h3 class="font-bold mb-4">이번 달 회비 납부 확인</h3>
+                    <div class="grid grid-cols-3 gap-2">
+                        ${appData.unpaidMembers.map(m => `
+                            <button onclick="runAction({action:'recordPayment', name:'${m}'})" class="bg-green-50 text-green-600 p-2 rounded-lg text-xs font-bold border border-green-200">${m}</button>
+                        `).join('')}
+                    </div>
+                `;
+            } else if (type === 'income') {
+                content.innerHTML = `
+                    <h3 class="font-bold mb-4">기타 수입/지출 기록</h3>
+                    <select id="trType" class="w-full border p-3 rounded-xl mb-2">
+                        <option value="수입">수입 (찬조금 등)</option>
+                        <option value="지출">지출 (대관료/음료 등)</option>
+                    </select>
+                    <input id="trDetail" class="w-full border p-3 rounded-xl mb-2" placeholder="항목명">
+                    <input id="trAmount" type="number" class="w-full border p-3 rounded-xl mb-3" placeholder="금액">
+                    <button onclick="runAction({action:'addTransaction', type:document.getElementById('trType').value, detail:document.getElementById('trDetail').value, amount:document.getElementById('trAmount').value})" class="w-full bg-orange-500 text-white py-3 rounded-xl font-bold">기록하기</button>
+                `;
+            } else if (type === 'history') {
+                content.innerHTML = `
+                    <h3 class="font-bold mb-4">최근 내역 (15건)</h3>
+                    <div class="space-y-3 text-xs overflow-y-auto max-h-60">
+                        ${appData.recentTransactions.map(t => `
+                            <div class="flex justify-between border-b pb-2">
+                                <span class="text-gray-400">${t[0]}</span>
+                                <span class="font-bold">${t[2]}</span>
+                                <span class="${t[1] === '수입' ? 'text-blue-500' : 'text-red-500'}">${t[1] === '수입' ? '+' : '-'}${Number(t[3]).toLocaleString()}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+        }
+
+        function hideSection() { document.getElementById('actionSection').classList.add('hidden'); }
+        window.onload = fetchData;
     </script>
 </body>
 </html>
