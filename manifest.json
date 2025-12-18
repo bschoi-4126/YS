@@ -1,0 +1,15 @@
+{
+  "name": "용성전기 풋살회비",
+  "short_name": "용성풋살",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1e293b",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/5328/5328065.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
