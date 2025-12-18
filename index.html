@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 min-h-screen p-4">
+    <div class="max-w-md mx-auto space-y-4">
+        
+        <div class="bg-blue-600 rounded-2xl p-6 text-white shadow-lg">
+            <h1 class="text-sm opacity-80">현재 총 잔액</h1>
+            <div class="text-3xl font-bold mt-1" id="balance">0원</div>
+            <div class="mt-4 flex justify-between text-sm border-t border-blue-400 pt-4">
+                <div>이번달 미납: <span id="unpaidCount" class="font-bold text-yellow-300">0</span>명</div>
+                <div id="dateNow"></div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl p-5 shadow-sm">
+            <h2 class="font-bold text-gray-700 mb-3"><i class="fa-solid fa-circle-exclamation text-red-500 mr-2"></i>미납 회원</h2>
+            <div id="unpaidList" class="flex flex-wrap gap-2 text-sm text-gray-600">
+                로딩 중...
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+            <button onclick="openModal('member')" class="bg-white p-4 rounded-xl shadow-sm text-center hover:bg-gray-50 transition">
+                <i class="fa-solid fa-user-plus text-blue-500 mb-1"></i>
+                <div class="text-xs font-semibold">회원 관리</div>
+            </button>
+            <button onclick="openModal('fee')" class="bg-white p-4 rounded-xl shadow-sm text-center hover:bg-gray-50 transition">
+                <i class="fa-solid fa-hand-holding-dollar text-green-500 mb-1"></i>
+                <div class="text-xs font-semibold">회비 납부</div>
+            </button>
+            <button onclick="openModal('transaction')" class="bg-white p-4 rounded-xl shadow-sm text-center hover:bg-gray-50 transition">
+                <i class="fa-solid fa-receipt text-orange-500 mb-1"></i>
+                <div class="text-xs font-semibold">기타 입출금</div>
+            </button>
+            <button onclick="init()" class="bg-white p-4 rounded-xl shadow-sm text-center hover:bg-gray-50 transition">
+                <i class="fa-solid fa-rotate text-purple-500 mb-1"></i>
+                <div class="text-xs font-semibold">새로고침</div>
+            </button>
+        </div>
+
+        <div class="bg-white rounded-xl p-5 shadow-sm">
+            <h2 class="font-bold text-gray-700 mb-3">최근 입출금 내역</h2>
+            <div id="recentLogs" class="space-y-3 text-sm">
+                </div>
+        </div>
+    </div>
+
+    <script>
+        const WEB_APP_URL = '여기에_복사한_배포_URL_넣기';
+
+        async function init() {
+            // 구글 앱스 스크립트와 통신하여 데이터 호출
+            google.script.run.withSuccessHandler(renderData).getData();
+        }
+
+        function renderData(data) {
+            document.getElementById('balance').innerText = data.balance.toLocaleString() + '원';
+            document.getElementById('unpaidCount').innerText = data.unpaidMembers.length;
+            document.getElementById('unpaidList').innerHTML = data.unpaidMembers.length > 0 ? 
+                data.unpaidMembers.map(m => `<span class="bg-red-100 text-red-600 px-2 py-1 rounded">${m}</span>`).join('') : "모두 납부 완료! 🎉";
+            
+            document.getElementById('recentLogs').innerHTML = data.transactions.map(t => `
+                <div class="flex justify-between border-b pb-2">
+                    <span>${t[2]}</span>
+                    <span class="${t[1] === '수입' ? 'text-blue-500' : 'text-red-500'} font-bold">
+                        ${t[1] === '수입' ? '+' : '-'}${t[3].toLocaleString()}
+                    </span>
+                </div>
+            `).join('');
+        }
+
+        // 초기 실행
+        window.onload = init;
+    </script>
+</body>
+</html>
