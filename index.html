@@ -20,6 +20,10 @@
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
         .animate-slide-up { animation: slideUp 0.3s ease-out; }
         .active-tab { background-color: #3b82f6 !important; color: white !important; }
+        
+        /* [수정] 스크롤바 디자인 */
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #e2e8f0; border-radius: 10px; }
     </style>
 </head>
 <body class="bg-slate-50">
@@ -35,7 +39,7 @@
 
         <main class="content-area p-4 space-y-4">
             <div class="bg-slate-900 rounded-[2rem] p-8 text-white shadow-xl relative overflow-hidden">
-                <p class="text-[10px] opacity-50 font-bold tracking-widest mb-1">TOTAL BALANCE</p>
+                <p class="text-[10px] opacity-50 font-bold tracking-widest mb-1 uppercase">Total Balance</p>
                 <div class="text-4xl font-black text-green-400" id="totalBalance">0원</div>
                 <i class="fa-solid fa-coins absolute -right-4 -bottom-4 text-8xl opacity-10"></i>
             </div>
@@ -52,16 +56,17 @@
             </div>
 
             <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
-                <h2 class="font-bold text-xs text-slate-400 mb-4 flex justify-between items-center">
-                    <span><i class="fa-solid fa-clock-rotate-left mr-2"></i>누적 미납 명단 (현재 기준)</span>
+                <h2 class="font-bold text-xs text-slate-400 mb-4 flex justify-between items-center uppercase tracking-widest">
+                    <span><i class="fa-solid fa-clock-rotate-left mr-2"></i>Unpaid List</span>
                     <span id="unpaidSummaryCount" class="bg-red-50 text-red-500 px-2 py-0.5 rounded-full text-[10px] font-black">0</span>
                 </h2>
                 <div id="unpaidList" class="space-y-3"></div>
             </div>
 
-            <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 min-h-[300px]">
-                <h3 class="font-bold text-slate-800 mb-5 text-sm">📅 <span id="monthLabel"></span> 상세 내역</h3>
-                <div id="monthlyLogs" class="space-y-4"></div>
+            <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 min-h-[400px]">
+                <h3 class="font-bold text-slate-800 mb-5 text-sm uppercase tracking-widest">📅 <span id="monthLabel"></span> 상세 내역</h3>
+                <div id="monthlyLogs" class="space-y-4 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+                    </div>
             </div>
         </main>
 
@@ -76,7 +81,7 @@
     <div id="actionSection" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[200] flex items-end">
         <div class="bg-white w-full rounded-t-[2.5rem] p-8 animate-slide-up max-h-[85vh] overflow-y-auto">
             <div id="sectionContent"></div>
-            <button onclick="hideSection()" class="w-full mt-6 py-4 bg-gray-100 rounded-2xl font-bold text-slate-400">닫기</button>
+            <button onclick="hideSection()" class="w-full mt-6 py-4 bg-gray-100 rounded-2xl font-bold text-gray-400">닫기</button>
         </div>
     </div>
 
@@ -95,7 +100,7 @@
             document.getElementById('monthLabel').innerText = `${m}월`;
             document.getElementById('yearlyIncomeTitle').innerText = `${y}년 총 수입`;
             document.getElementById('yearlyExpenseTitle').innerText = `${y}년 총 지출`;
-            document.getElementById('monthlyLogs').innerHTML = '<p class="text-center py-10 text-xs text-slate-300 italic">로딩 중...</p>';
+            document.getElementById('monthlyLogs').innerHTML = '<p class="text-center py-10 text-xs text-slate-300 italic font-bold">데이터 분석 중...</p>';
             try {
                 const resp = await fetch(`${API_URL}?action=getData&year=${y}&month=${m}`);
                 appData = await resp.json();
@@ -108,7 +113,6 @@
             document.getElementById('yearlyIncome').innerText = (appData.yearlyIncome || 0).toLocaleString() + '원';
             document.getElementById('yearlyExpense').innerText = (appData.yearlyExpense || 0).toLocaleString() + '원';
             
-            // 상단 리스트: '오늘' 기준 진짜 미납자만 표시
             const realArrears = appData.unpaidSummary.filter(u => u.months.length > 0 && u.status === '활동');
             document.getElementById('unpaidSummaryCount').innerText = realArrears.length;
             document.getElementById('unpaidList').innerHTML = realArrears.map(u => `
@@ -121,7 +125,7 @@
             document.getElementById('monthlyLogs').innerHTML = appData.monthlyLogs.map(l => `
                 <div class="flex justify-between items-center border-b border-slate-50 pb-4">
                     <div class="flex gap-4 items-center">
-                        <div onclick="deleteLog('${l.logType}', '${l.id}', '${l.detail}')" class="text-red-500 hover:text-red-700 transition cursor-pointer px-1">
+                        <div onclick="deleteLog('${l.logType}', '${l.id}', '${l.detail}')" class="text-red-500 hover:text-red-700 transition cursor-pointer px-2 py-1 bg-red-50 rounded-lg">
                             <i class="fa-solid fa-trash-can text-sm"></i>
                         </div>
                         <div>
@@ -149,7 +153,6 @@
             history.pushState({ section: type }, '');
 
             if (type === 'payment') {
-                // 회비입력창: 상단에서 선택한 달에 납부 안 한 활동 회원 모두 표시
                 const targetUnpaid = appData.unpaidSummary.filter(u => u.isTargetUnpaid && u.status === '활동');
                 content.innerHTML = `
                     <h3 class="font-black text-xl mb-4">${monthSel.value}월 회비 체크</h3>
@@ -166,24 +169,24 @@
                     <h3 class="font-black text-xl mb-6">기타 입출금</h3>
                     <div class="space-y-4 text-left">
                         <div class="flex gap-2 bg-slate-100 p-1 rounded-2xl"><button id="btnIn" onclick="setTrType('수입')" class="flex-1 py-3 rounded-xl font-black text-sm active-tab">수입</button><button id="btnOut" onclick="setTrType('지출')" class="flex-1 py-3 rounded-xl font-black text-sm">지출</button></div>
-                        <input id="trDate" type="date" class="w-full bg-slate-50 p-4 rounded-xl border-none font-bold" value="${new Date().toISOString().split('T')[0]}">
-                        <input id="trDetail" class="w-full bg-slate-50 p-4 rounded-xl border-none font-bold" placeholder="내역">
-                        <input id="trAmount" type="number" class="w-full bg-slate-50 p-4 rounded-xl border-none font-bold" placeholder="금액">
-                        <button onclick="addTr()" class="w-full bg-slate-900 text-white py-5 rounded-2xl font-black shadow-xl">저장하기</button>
+                        <input id="trDate" type="date" class="w-full bg-slate-50 p-4 rounded-xl border-none font-bold outline-none" value="${new Date().toISOString().split('T')[0]}">
+                        <input id="trDetail" class="w-full bg-slate-50 p-4 rounded-xl border-none font-bold outline-none" placeholder="내역">
+                        <input id="trAmount" type="number" class="w-full bg-slate-50 p-4 rounded-xl border-none font-bold outline-none" placeholder="금액">
+                        <button onclick="addTr()" class="w-full bg-slate-900 text-white py-5 rounded-2xl font-black shadow-xl active:scale-95 transition">저장하기</button>
                     </div>
                 `; window.trType = '수입';
             } else if (type === 'members') {
                 content.innerHTML = `
                     <h3 class="font-black text-xl mb-6">멤버 관리</h3>
                     <div class="bg-blue-50 p-5 rounded-3xl mb-6">
-                        <input id="newMem" class="w-full p-4 rounded-2xl mb-2 border-none font-bold" placeholder="이름">
-                        <input id="joinDate" type="month" class="w-full p-4 rounded-2xl mb-2 border-none font-bold" value="2025-01">
-                        <button onclick="addMem()" class="w-full bg-blue-600 text-white py-3 rounded-xl font-black">추가</button>
+                        <input id="newMem" class="w-full p-4 rounded-2xl mb-2 border-none font-bold outline-none" placeholder="이름">
+                        <input id="joinDate" type="month" class="w-full p-4 rounded-2xl mb-2 border-none font-bold outline-none" value="2025-01">
+                        <button onclick="addMem()" class="w-full bg-blue-600 text-white py-3 rounded-xl font-black active:scale-95 transition">추가</button>
                     </div>
-                    <div class="space-y-2">
-                        ${appData.members.map(m => `<div class="flex justify-between items-center p-4 border rounded-2xl"><span class="font-bold text-sm">${m.name}</span>
-                        <div class="flex items-center gap-2"><select onchange="updateStatus('${m.name}', this.value)" class="text-[10px] font-bold bg-slate-100 rounded-lg p-2"><option value="활동" ${m.status==='활동'?'selected':''}>활동</option><option value="휴식" ${m.status==='휴식'?'selected':''}>휴식</option></select>
-                        <i onclick="delMem('${m.name}')" class="fa-solid fa-circle-xmark text-slate-300 ml-1 text-lg cursor-pointer"></i></div></div>`).join('')}
+                    <div class="space-y-2 pr-2 max-h-60 overflow-y-auto custom-scrollbar">
+                        ${appData.members.map(m => `<div class="flex justify-between items-center p-4 border rounded-2xl"><span class="font-bold text-sm text-slate-600">${m.name}</span>
+                        <div class="flex items-center gap-2"><select onchange="updateStatus('${m.name}', this.value)" class="text-[10px] font-bold bg-slate-100 rounded-lg p-2 outline-none"><option value="활동" ${m.status==='활동'?'selected':''}>활동</option><option value="휴식" ${m.status==='휴식'?'selected':''}>휴식</option></select>
+                        <i onclick="delMem('${m.name}')" class="fa-solid fa-circle-xmark text-slate-300 ml-1 text-lg cursor-pointer hover:text-red-400 transition"></i></div></div>`).join('')}
                     </div>
                 `;
             }
@@ -205,6 +208,7 @@
         async function addMem() {
             const name = document.getElementById('newMem').value;
             const date = document.getElementById('joinDate').value;
+            if(!name) return;
             await fetch(`${API_URL}?action=addMember&name=${name}&joinDate=${date}`);
             hideSection(); fetchData();
         }
@@ -225,6 +229,7 @@
             const detail = document.getElementById('trDetail').value;
             const amount = document.getElementById('trAmount').value;
             const date = document.getElementById('trDate').value;
+            if(!detail || !amount) return;
             await fetch(`${API_URL}?action=addTransaction&type=${type}&detail=${detail}&amount=${amount}&date=${date}`);
             hideSection(); fetchData();
         }
