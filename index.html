@@ -20,8 +20,6 @@
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
         .animate-slide-up { animation: slideUp 0.3s ease-out; }
         .active-tab { background-color: #3b82f6 !important; color: white !important; }
-        
-        /* [수정] 스크롤바 디자인 */
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #e2e8f0; border-radius: 10px; }
     </style>
@@ -57,7 +55,7 @@
 
             <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
                 <h2 class="font-bold text-xs text-slate-400 mb-4 flex justify-between items-center uppercase tracking-widest">
-                    <span><i class="fa-solid fa-clock-rotate-left mr-2"></i>Unpaid List</span>
+                    <span><i class="fa-solid fa-clock-rotate-left mr-2"></i>누적 미납 명단 (현재 기준)</span>
                     <span id="unpaidSummaryCount" class="bg-red-50 text-red-500 px-2 py-0.5 rounded-full text-[10px] font-black">0</span>
                 </h2>
                 <div id="unpaidList" class="space-y-3"></div>
@@ -65,8 +63,7 @@
 
             <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 min-h-[400px]">
                 <h3 class="font-bold text-slate-800 mb-5 text-sm uppercase tracking-widest">📅 <span id="monthLabel"></span> 상세 내역</h3>
-                <div id="monthlyLogs" class="space-y-4 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
-                    </div>
+                <div id="monthlyLogs" class="space-y-4 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar"></div>
             </div>
         </main>
 
@@ -81,13 +78,13 @@
     <div id="actionSection" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[200] flex items-end">
         <div class="bg-white w-full rounded-t-[2.5rem] p-8 animate-slide-up max-h-[85vh] overflow-y-auto">
             <div id="sectionContent"></div>
-            <button onclick="hideSection()" class="w-full mt-6 py-4 bg-gray-100 rounded-2xl font-bold text-gray-400">닫기</button>
+            <button onclick="hideSection()" class="w-full mt-6 py-4 bg-gray-100 rounded-2xl font-bold text-slate-400">닫기</button>
         </div>
     </div>
 
     <script>
         const API_URL = 'https://script.google.com/macros/s/AKfycbyK107gsKmFhydwYes19qSHrYPyN6NmlRxLPMOtfr9V8EyhCBHTp1J9FpcDZSCaFxS-RA/exec';
-        let appData = {};
+        let appData = { totalBalance: 0, yearlyIncome: 0, yearlyExpense: 0, unpaidSummary: [], members: [], monthlyLogs: [] };
 
         const now = new Date();
         const yearSel = document.getElementById('viewYear');
@@ -100,7 +97,6 @@
             document.getElementById('monthLabel').innerText = `${m}월`;
             document.getElementById('yearlyIncomeTitle').innerText = `${y}년 총 수입`;
             document.getElementById('yearlyExpenseTitle').innerText = `${y}년 총 지출`;
-            document.getElementById('monthlyLogs').innerHTML = '<p class="text-center py-10 text-xs text-slate-300 italic font-bold">데이터 분석 중...</p>';
             try {
                 const resp = await fetch(`${API_URL}?action=getData&year=${y}&month=${m}`);
                 appData = await resp.json();
@@ -125,7 +121,7 @@
             document.getElementById('monthlyLogs').innerHTML = appData.monthlyLogs.map(l => `
                 <div class="flex justify-between items-center border-b border-slate-50 pb-4">
                     <div class="flex gap-4 items-center">
-                        <div onclick="deleteLog('${l.logType}', '${l.id}', '${l.detail}')" class="text-red-500 hover:text-red-700 transition cursor-pointer px-2 py-1 bg-red-50 rounded-lg">
+                        <div onclick="deleteLog('${l.logType}', '${l.id}', '${l.detail}', ${l.amount}, '${l.type}')" class="text-red-500 hover:text-red-700 transition cursor-pointer px-2 py-1 bg-red-50 rounded-lg">
                             <i class="fa-solid fa-trash-can text-sm"></i>
                         </div>
                         <div>
@@ -140,110 +136,126 @@
             `).join('') || '<p class="text-center text-slate-300 py-10 text-xs italic">내역 없음</p>';
         }
 
-        async function deleteLog(logType, id, detail) {
-            if(!confirm(`[${detail}] 내역을 삭제하시겠습니까?`)) return;
-            await fetch(`${API_URL}?action=deleteLog&type=${logType}&id=${id}`);
-            fetchData();
-        }
-
-        function showSection(type) {
-            const section = document.getElementById('actionSection');
-            const content = document.getElementById('sectionContent');
-            section.classList.remove('hidden');
-            history.pushState({ section: type }, '');
-
-            if (type === 'payment') {
-                const targetUnpaid = appData.unpaidSummary.filter(u => u.isTargetUnpaid && u.status === '활동');
-                content.innerHTML = `
-                    <h3 class="font-black text-xl mb-4">${monthSel.value}월 회비 체크</h3>
-                    <div class="grid grid-cols-2 gap-2 mb-6" id="multiPayList">
-                        ${targetUnpaid.map(u => `
-                            <label class="cursor-pointer"><input type="checkbox" name="payMember" value="${u.name}" class="hidden peer">
-                            <span class="flex items-center justify-center p-4 border rounded-2xl bg-slate-50 font-bold text-sm peer-checked:border-emerald-500 peer-checked:bg-emerald-50 peer-checked:text-emerald-700">${u.name}</span></label>
-                        `).join('') || '<p class="col-span-2 text-center py-10 text-slate-300 italic font-bold">모두 납부 완료!</p>'}
-                    </div>
-                    <button onclick="submitMultiPay()" class="w-full bg-emerald-500 text-white py-5 rounded-2xl font-black shadow-lg">납부 저장</button>
-                `;
-            } else if (type === 'income') {
-                content.innerHTML = `
-                    <h3 class="font-black text-xl mb-6">기타 입출금</h3>
-                    <div class="space-y-4 text-left">
-                        <div class="flex gap-2 bg-slate-100 p-1 rounded-2xl"><button id="btnIn" onclick="setTrType('수입')" class="flex-1 py-3 rounded-xl font-black text-sm active-tab">수입</button><button id="btnOut" onclick="setTrType('지출')" class="flex-1 py-3 rounded-xl font-black text-sm">지출</button></div>
-                        <input id="trDate" type="date" class="w-full bg-slate-50 p-4 rounded-xl border-none font-bold outline-none" value="${new Date().toISOString().split('T')[0]}">
-                        <input id="trDetail" class="w-full bg-slate-50 p-4 rounded-xl border-none font-bold outline-none" placeholder="내역">
-                        <input id="trAmount" type="number" class="w-full bg-slate-50 p-4 rounded-xl border-none font-bold outline-none" placeholder="금액">
-                        <button onclick="addTr()" class="w-full bg-slate-900 text-white py-5 rounded-2xl font-black shadow-xl active:scale-95 transition">저장하기</button>
-                    </div>
-                `; window.trType = '수입';
-            } else if (type === 'members') {
-                content.innerHTML = `
-                    <h3 class="font-black text-xl mb-6">멤버 관리</h3>
-                    <div class="bg-blue-50 p-5 rounded-3xl mb-6">
-                        <input id="newMem" class="w-full p-4 rounded-2xl mb-2 border-none font-bold outline-none" placeholder="이름">
-                        <input id="joinDate" type="month" class="w-full p-4 rounded-2xl mb-2 border-none font-bold outline-none" value="2025-01">
-                        <button onclick="addMem()" class="w-full bg-blue-600 text-white py-3 rounded-xl font-black active:scale-95 transition">추가</button>
-                    </div>
-                    <div class="space-y-2 pr-2 max-h-60 overflow-y-auto custom-scrollbar">
-                        ${appData.members.map(m => `<div class="flex justify-between items-center p-4 border rounded-2xl"><span class="font-bold text-sm text-slate-600">${m.name}</span>
-                        <div class="flex items-center gap-2"><select onchange="updateStatus('${m.name}', this.value)" class="text-[10px] font-bold bg-slate-100 rounded-lg p-2 outline-none"><option value="활동" ${m.status==='활동'?'selected':''}>활동</option><option value="휴식" ${m.status==='휴식'?'selected':''}>휴식</option></select>
-                        <i onclick="delMem('${m.name}')" class="fa-solid fa-circle-xmark text-slate-300 ml-1 text-lg cursor-pointer hover:text-red-400 transition"></i></div></div>`).join('')}
-                    </div>
-                `;
-            }
-        }
-
-        function setTrType(type) {
-            window.trType = type;
-            document.getElementById('btnIn').classList.toggle('active-tab', type==='수입');
-            document.getElementById('btnOut').classList.toggle('active-tab', type==='지출');
-        }
+        // --- 즉각 반응형 기능 함수들 ---
 
         async function submitMultiPay() {
             const selected = Array.from(document.querySelectorAll('input[name="payMember"]:checked')).map(el => el.value);
-            if(selected.length === 0) return alert('선택된 인원이 없습니다.');
-            await fetch(`${API_URL}?action=recordMultiPayments&names=${JSON.stringify(selected)}&year=${yearSel.value}&month=${monthSel.value}`);
-            hideSection(); fetchData();
+            if(selected.length === 0) return alert('인원을 선택하세요.');
+
+            // [즉각 반영] UI 먼저 업데이트
+            selected.forEach(name => {
+                const member = appData.unpaidSummary.find(u => u.name === name);
+                if(member) {
+                    member.isTargetUnpaid = false;
+                    member.months = member.months.filter(m => m !== `${yearSel.value}-${parseInt(monthSel.value)}`);
+                    appData.totalBalance += 10000;
+                    appData.yearlyIncome += 10000;
+                    appData.monthlyLogs.unshift({ id: Date.now(), date: '회비', type: '수입', detail: `${name} 회비`, amount: 10000, logType: 'fee' });
+                }
+            });
+            renderUI(); hideSection();
+
+            try {
+                await fetch(`${API_URL}?action=recordMultiPayments&names=${JSON.stringify(selected)}&year=${yearSel.value}&month=${monthSel.value}`);
+                fetchData(); // 정확한 데이터 동기화
+            } catch(e) { alert("서버 저장 실패"); fetchData(); }
+        }
+
+        async function addTr() {
+            const type = window.trType;
+            const detail = document.getElementById('trDetail').value;
+            const amount = Number(document.getElementById('trAmount').value);
+            const date = document.getElementById('trDate').value;
+            if(!detail || !amount) return alert('내용과 금액을 입력하세요.');
+
+            // [즉각 반영] UI 먼저 업데이트
+            appData.totalBalance += (type === '수입' ? amount : -amount);
+            if(new Date(date).getFullYear() == yearSel.value) {
+                if(type === '수입') appData.yearlyIncome += amount;
+                else appData.yearlyExpense += amount;
+            }
+            appData.monthlyLogs.unshift({ id: Date.now(), date: date, type: type, detail: detail, amount: amount, logType: 'trans' });
+            renderUI(); hideSection();
+
+            try {
+                await fetch(`${API_URL}?action=addTransaction&type=${type}&detail=${detail}&amount=${amount}&date=${date}`);
+                fetchData();
+            } catch(e) { alert("저장 실패"); fetchData(); }
+        }
+
+        async function deleteLog(logType, id, detail, amount, type) {
+            if(!confirm(`[${detail}] 삭제할까요?`)) return;
+
+            // [즉각 반영] UI 먼저 제거
+            appData.monthlyLogs = appData.monthlyLogs.filter(l => l.id != id);
+            appData.totalBalance -= (type === '수입' ? amount : -amount);
+            if(type === '수입') appData.yearlyIncome -= amount; else appData.yearlyExpense -= amount;
+            renderUI();
+
+            try {
+                await fetch(`${API_URL}?action=deleteLog&type=${logType}&id=${id}`);
+                fetchData();
+            } catch(e) { alert("삭제 실패"); fetchData(); }
         }
 
         async function addMem() {
             const name = document.getElementById('newMem').value;
             const date = document.getElementById('joinDate').value;
             if(!name) return;
-            await fetch(`${API_URL}?action=addMember&name=${name}&joinDate=${date}`);
-            hideSection(); fetchData();
+
+            // [즉각 반영]
+            appData.members.push({ name, joinDate: date, status: '활동' });
+            renderUI(); hideSection();
+
+            try {
+                await fetch(`${API_URL}?action=addMember&name=${name}&joinDate=${date}`);
+                fetchData();
+            } catch(e) { alert("추가 실패"); fetchData(); }
         }
 
         async function updateStatus(name, status) {
-            await fetch(`${API_URL}?action=updateStatus&name=${name}&status=${status}`);
-            fetchData();
+            const member = appData.members.find(m => m.name === name);
+            if(member) member.status = status;
+            renderUI();
+
+            try {
+                await fetch(`${API_URL}?action=updateStatus&name=${name}&status=${status}`);
+                fetchData();
+            } catch(e) { alert("상태 변경 실패"); fetchData(); }
         }
 
-        async function delMem(name) {
-            if(!confirm('삭제하시겠습니까?')) return;
-            await fetch(`${API_URL}?action=deleteMember&name=${name}`);
-            fetchData();
-        }
-
-        async function addTr() {
-            const type = window.trType;
-            const detail = document.getElementById('trDetail').value;
-            const amount = document.getElementById('trAmount').value;
-            const date = document.getElementById('trDate').value;
-            if(!detail || !amount) return;
-            await fetch(`${API_URL}?action=addTransaction&type=${type}&detail=${detail}&amount=${amount}&date=${date}`);
-            hideSection(); fetchData();
-        }
-
-        function hideSection(isPopState = false) {
-            document.getElementById('actionSection').classList.add('hidden');
-            if (!isPopState && history.state && history.state.section) { history.back(); }
-        }
-
-        window.onpopstate = function(event) {
+        // --- 기타 공통 로직 ---
+        function showSection(type) {
             const section = document.getElementById('actionSection');
-            if (!section.classList.contains('hidden')) { hideSection(true); }
-        };
+            const content = document.getElementById('sectionContent');
+            section.classList.remove('hidden');
+            history.pushState({ section: type }, '');
+            if (type === 'payment') {
+                const targetUnpaid = appData.unpaidSummary.filter(u => u.isTargetUnpaid && u.status === '활동');
+                content.innerHTML = `<h3 class="font-black text-xl mb-4">${monthSel.value}월 회비 체크</h3><div class="grid grid-cols-2 gap-2 mb-6">
+                ${targetUnpaid.map(u => `<label class="cursor-pointer"><input type="checkbox" name="payMember" value="${u.name}" class="hidden peer">
+                <span class="flex items-center justify-center p-4 border rounded-2xl bg-slate-50 font-bold text-sm peer-checked:border-emerald-500 peer-checked:bg-emerald-50 peer-checked:text-emerald-700">${u.name}</span></label>`).join('') || '<p class="col-span-2 text-center py-10 text-slate-300">납부할 인원이 없습니다.</p>'}
+                </div><button onclick="submitMultiPay()" class="w-full bg-emerald-500 text-white py-5 rounded-2xl font-black shadow-lg">납부 저장</button>`;
+            } else if (type === 'income') {
+                content.innerHTML = `<h3 class="font-black text-xl mb-6">기타 입출금</h3><div class="space-y-4"><div class="flex gap-2 bg-slate-100 p-1 rounded-2xl">
+                <button id="btnIn" onclick="setTrType('수입')" class="flex-1 py-3 rounded-xl font-black active-tab">수입</button><button id="btnOut" onclick="setTrType('지출')" class="flex-1 py-3 rounded-xl font-black">지출</button></div>
+                <input id="trDate" type="date" class="w-full bg-slate-50 p-4 rounded-xl border-none font-bold outline-none" value="${new Date().toISOString().split('T')[0]}">
+                <input id="trDetail" class="w-full bg-slate-50 p-4 rounded-xl border-none font-bold outline-none" placeholder="내역">
+                <input id="trAmount" type="number" class="w-full bg-slate-50 p-4 rounded-xl border-none font-bold outline-none" placeholder="금액">
+                <button onclick="addTr()" class="w-full bg-slate-900 text-white py-5 rounded-2xl font-black shadow-xl">저장하기</button></div>`; window.trType = '수입';
+            } else if (type === 'members') {
+                content.innerHTML = `<h3 class="font-black text-xl mb-6">멤버 관리</h3><div class="bg-blue-50 p-5 rounded-3xl mb-6"><input id="newMem" class="w-full p-4 rounded-2xl mb-2 border-none font-bold outline-none" placeholder="이름">
+                <input id="joinDate" type="month" class="w-full p-4 rounded-2xl mb-2 border-none font-bold outline-none" value="2025-01"><button onclick="addMem()" class="w-full bg-blue-600 text-white py-3 rounded-xl font-black">추가</button></div>
+                <div class="space-y-2 max-h-60 overflow-y-auto custom-scrollbar">${appData.members.map(m => `<div class="flex justify-between items-center p-4 border rounded-2xl"><span class="font-bold text-sm text-slate-600">${m.name}</span>
+                <div class="flex items-center gap-2"><select onchange="updateStatus('${m.name}', this.value)" class="text-[10px] font-bold bg-slate-100 rounded-lg p-2 outline-none"><option value="활동" ${m.status==='활동'?'selected':''}>활동</option><option value="휴식" ${m.status==='휴식'?'selected':''}>휴식</option></select>
+                <i onclick="delMem('${m.name}')" class="fa-solid fa-circle-xmark text-slate-300 ml-1 text-lg cursor-pointer"></i></div></div>`).join('')}</div>`;
+            }
+        }
 
+        function setTrType(type) { window.trType = type; document.getElementById('btnIn').classList.toggle('active-tab', type==='수입'); document.getElementById('btnOut').classList.toggle('active-tab', type==='지출'); }
+        async function delMem(name) { if(!confirm('삭제하시겠습니까?')) return; await fetch(`${API_URL}?action=deleteMember&name=${name}`); fetchData(); }
+        function hideSection(isPopState = false) { document.getElementById('actionSection').classList.add('hidden'); if (!isPopState && history.state && history.state.section) { history.back(); } }
+        window.onpopstate = function(event) { const section = document.getElementById('actionSection'); if (!section.classList.contains('hidden')) { hideSection(true); } };
         window.onload = fetchData;
     </script>
 </body>
