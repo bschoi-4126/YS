@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="manifest" href="manifest.json">
     <title>용성전기 풋살 회비</title>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -11,7 +12,7 @@
     <style>
         @font-face { font-family: 'Pretendard-Regular'; src: url('https://cdn.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-Regular.woff') format('woff'); }
         body { font-family: 'Pretendard-Regular', sans-serif; -webkit-tap-highlight-color: transparent; user-select: none; }
-        .app-container { max-width: 500px; margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column; }
+        .app-container { max-width: 500px; margin: 0 auto; height: 100vh; display: flex; flex-direction: column; }
         .content-area { flex: 1; overflow-y: auto; padding-bottom: 100px; }
         .nav-bar { position: fixed; bottom: 0; left: 0; right: 0; max-width: 500px; margin: 0 auto; background: white; border-top: 1px solid #f1f5f9; display: flex; justify-content: space-around; padding: 12px 0 24px 0; z-index: 100; box-shadow: 0 -4px 6px -1px rgb(0 0 0 / 0.1); }
         .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: #94a3b8; font-size: 10px; font-weight: 700; width: 25%; }
@@ -34,7 +35,7 @@
 
         <main class="content-area p-4 space-y-4">
             <div class="bg-slate-900 rounded-[2rem] p-8 text-white shadow-xl relative overflow-hidden">
-                <p class="text-[10px] opacity-50 font-bold tracking-widest mb-1 uppercase">Total Balance</p>
+                <p class="text-[10px] opacity-50 font-bold tracking-widest mb-1">TOTAL BALANCE</p>
                 <div class="text-4xl font-black text-green-400" id="totalBalance">0원</div>
                 <i class="fa-solid fa-coins absolute -right-4 -bottom-4 text-8xl opacity-10"></i>
             </div>
@@ -51,18 +52,15 @@
             </div>
 
             <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
-                <h2 class="font-bold text-xs text-slate-400 mb-4 flex justify-between items-center uppercase tracking-widest">
-                    <span><i class="fa-solid fa-clock-rotate-left mr-2"></i>Unpaid List</span>
+                <h2 class="font-bold text-xs text-slate-400 mb-4 flex justify-between items-center">
+                    <span><i class="fa-solid fa-clock-rotate-left mr-2"></i>누적 미납 명단 (현재 기준)</span>
                     <span id="unpaidSummaryCount" class="bg-red-50 text-red-500 px-2 py-0.5 rounded-full text-[10px] font-black">0</span>
                 </h2>
                 <div id="unpaidList" class="space-y-3"></div>
             </div>
 
             <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 min-h-[300px]">
-                <h3 class="font-bold text-slate-800 mb-5 text-sm flex justify-between">
-                    <span>📅 <span id="monthLabel"></span> 상세 내역</span>
-                    <span class="text-[10px] text-slate-300">삭제는 아이콘 클릭</span>
-                </h3>
+                <h3 class="font-bold text-slate-800 mb-5 text-sm">📅 <span id="monthLabel"></span> 상세 내역</h3>
                 <div id="monthlyLogs" class="space-y-4"></div>
             </div>
         </main>
@@ -78,7 +76,7 @@
     <div id="actionSection" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[200] flex items-end">
         <div class="bg-white w-full rounded-t-[2.5rem] p-8 animate-slide-up max-h-[85vh] overflow-y-auto">
             <div id="sectionContent"></div>
-            <button onclick="hideSection()" class="w-full mt-6 py-4 bg-gray-50 rounded-2xl font-bold text-gray-400">닫기</button>
+            <button onclick="hideSection()" class="w-full mt-6 py-4 bg-gray-100 rounded-2xl font-bold text-slate-400">닫기</button>
         </div>
     </div>
 
@@ -109,20 +107,22 @@
             document.getElementById('totalBalance').innerText = (appData.totalBalance || 0).toLocaleString() + '원';
             document.getElementById('yearlyIncome').innerText = (appData.yearlyIncome || 0).toLocaleString() + '원';
             document.getElementById('yearlyExpense').innerText = (appData.yearlyExpense || 0).toLocaleString() + '원';
-            document.getElementById('unpaidSummaryCount').innerText = appData.unpaidSummary.length;
             
-            document.getElementById('unpaidList').innerHTML = appData.unpaidSummary.map(u => `
+            // 상단 리스트: '오늘' 기준 진짜 미납자만 표시
+            const realArrears = appData.unpaidSummary.filter(u => u.months.length > 0 && u.status === '활동');
+            document.getElementById('unpaidSummaryCount').innerText = realArrears.length;
+            document.getElementById('unpaidList').innerHTML = realArrears.map(u => `
                 <div class="flex justify-between items-center bg-slate-50 p-3 rounded-2xl border border-slate-100">
                     <div><span class="font-bold text-slate-700 text-sm">${u.name}</span><p class="text-[9px] text-red-400 font-medium">${u.months.slice(-3).join(', ')} 미납</p></div>
                     <span class="bg-red-500 text-white text-[10px] px-2 py-1 rounded-lg font-black">${u.months.length}회</span>
                 </div>
-            `).join('') || '<p class="text-center text-emerald-500 font-bold text-xs py-2">모두 완납! ⚽</p>';
+            `).join('') || '<p class="text-center text-emerald-500 font-bold text-xs py-2">완납 중! ⚽</p>';
 
             document.getElementById('monthlyLogs').innerHTML = appData.monthlyLogs.map(l => `
                 <div class="flex justify-between items-center border-b border-slate-50 pb-4">
-                    <div class="flex gap-3 items-center">
-                        <div onclick="deleteLog('${l.logType}', '${l.id}', '${l.detail}')" class="text-slate-200 hover:text-red-500 transition cursor-pointer px-1">
-                            <i class="fa-solid fa-trash-can text-xs"></i>
+                    <div class="flex gap-4 items-center">
+                        <div onclick="deleteLog('${l.logType}', '${l.id}', '${l.detail}')" class="text-red-500 hover:text-red-700 transition cursor-pointer px-1">
+                            <i class="fa-solid fa-trash-can text-sm"></i>
                         </div>
                         <div>
                             <p class="font-bold text-slate-700 text-sm">${l.detail}</p>
@@ -149,16 +149,15 @@
             history.pushState({ section: type }, '');
 
             if (type === 'payment') {
-                const thisMonthStr = `${yearSel.value}-${monthSel.value}`;
-                // 수정된 로직: 선택한 달(미래 포함)에 미납인 사람들을 모두 추출
-                const thisMonthUnpaid = appData.unpaidSummary.filter(u => u.months.includes(thisMonthStr));
+                // 회비입력창: 상단에서 선택한 달에 납부 안 한 활동 회원 모두 표시
+                const targetUnpaid = appData.unpaidSummary.filter(u => u.isTargetUnpaid && u.status === '활동');
                 content.innerHTML = `
                     <h3 class="font-black text-xl mb-4">${monthSel.value}월 회비 체크</h3>
                     <div class="grid grid-cols-2 gap-2 mb-6" id="multiPayList">
-                        ${thisMonthUnpaid.map(u => `
+                        ${targetUnpaid.map(u => `
                             <label class="cursor-pointer"><input type="checkbox" name="payMember" value="${u.name}" class="hidden peer">
                             <span class="flex items-center justify-center p-4 border rounded-2xl bg-slate-50 font-bold text-sm peer-checked:border-emerald-500 peer-checked:bg-emerald-50 peer-checked:text-emerald-700">${u.name}</span></label>
-                        `).join('') || '<p class="col-span-2 text-center py-10 text-slate-300">이 달은 미납자가 없습니다.</p>'}
+                        `).join('') || '<p class="col-span-2 text-center py-10 text-slate-300 italic font-bold">모두 납부 완료!</p>'}
                     </div>
                     <button onclick="submitMultiPay()" class="w-full bg-emerald-500 text-white py-5 rounded-2xl font-black shadow-lg">납부 저장</button>
                 `;
@@ -216,7 +215,7 @@
         }
 
         async function delMem(name) {
-            if(!confirm('멤버를 삭제하시겠습니까?')) return;
+            if(!confirm('삭제하시겠습니까?')) return;
             await fetch(`${API_URL}?action=deleteMember&name=${name}`);
             fetchData();
         }
