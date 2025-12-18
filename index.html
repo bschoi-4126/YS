@@ -78,7 +78,7 @@
     <div id="actionSection" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[200] flex items-end">
         <div class="bg-white w-full rounded-t-[2.5rem] p-8 animate-slide-up max-h-[85vh] overflow-y-auto">
             <div id="sectionContent"></div>
-            <button onclick="hideSection()" class="w-full mt-6 py-4 bg-gray-100 rounded-2xl font-bold text-slate-400">닫기</button>
+            <button onclick="hideSection()" class="w-full mt-6 py-4 bg-gray-100 rounded-2xl font-bold text-gray-400">닫기</button>
         </div>
     </div>
 
@@ -118,6 +118,7 @@
                 </div>
             `).join('') || '<p class="text-center text-emerald-500 font-bold text-xs py-2">완납 중! ⚽</p>';
 
+            // 최신 내역이 위로 오도록 렌더링
             document.getElementById('monthlyLogs').innerHTML = appData.monthlyLogs.map(l => `
                 <div class="flex justify-between items-center border-b border-slate-50 pb-4">
                     <div class="flex gap-4 items-center">
@@ -136,13 +137,11 @@
             `).join('') || '<p class="text-center text-slate-300 py-10 text-xs italic">내역 없음</p>';
         }
 
-        // --- 즉각 반응형 기능 함수들 ---
-
         async function submitMultiPay() {
             const selected = Array.from(document.querySelectorAll('input[name="payMember"]:checked')).map(el => el.value);
             if(selected.length === 0) return alert('인원을 선택하세요.');
 
-            // [즉각 반영] UI 먼저 업데이트
+            // [즉각 반영] UI 최상단에 추가 (unshift)
             selected.forEach(name => {
                 const member = appData.unpaidSummary.find(u => u.name === name);
                 if(member) {
@@ -157,7 +156,7 @@
 
             try {
                 await fetch(`${API_URL}?action=recordMultiPayments&names=${JSON.stringify(selected)}&year=${yearSel.value}&month=${monthSel.value}`);
-                fetchData(); // 정확한 데이터 동기화
+                fetchData();
             } catch(e) { alert("서버 저장 실패"); fetchData(); }
         }
 
@@ -168,7 +167,7 @@
             const date = document.getElementById('trDate').value;
             if(!detail || !amount) return alert('내용과 금액을 입력하세요.');
 
-            // [즉각 반영] UI 먼저 업데이트
+            // [즉각 반영] UI 최상단에 추가 (unshift)
             appData.totalBalance += (type === '수입' ? amount : -amount);
             if(new Date(date).getFullYear() == yearSel.value) {
                 if(type === '수입') appData.yearlyIncome += amount;
@@ -186,7 +185,6 @@
         async function deleteLog(logType, id, detail, amount, type) {
             if(!confirm(`[${detail}] 삭제할까요?`)) return;
 
-            // [즉각 반영] UI 먼저 제거
             appData.monthlyLogs = appData.monthlyLogs.filter(l => l.id != id);
             appData.totalBalance -= (type === '수입' ? amount : -amount);
             if(type === '수입') appData.yearlyIncome -= amount; else appData.yearlyExpense -= amount;
@@ -202,11 +200,8 @@
             const name = document.getElementById('newMem').value;
             const date = document.getElementById('joinDate').value;
             if(!name) return;
-
-            // [즉각 반영]
             appData.members.push({ name, joinDate: date, status: '활동' });
             renderUI(); hideSection();
-
             try {
                 await fetch(`${API_URL}?action=addMember&name=${name}&joinDate=${date}`);
                 fetchData();
@@ -217,14 +212,12 @@
             const member = appData.members.find(m => m.name === name);
             if(member) member.status = status;
             renderUI();
-
             try {
                 await fetch(`${API_URL}?action=updateStatus&name=${name}&status=${status}`);
                 fetchData();
             } catch(e) { alert("상태 변경 실패"); fetchData(); }
         }
 
-        // --- 기타 공통 로직 ---
         function showSection(type) {
             const section = document.getElementById('actionSection');
             const content = document.getElementById('sectionContent');
