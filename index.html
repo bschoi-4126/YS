@@ -3,68 +3,70 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>용성전기(주) 풋살 회비 관리</title>
+    <title>용성전기(주) 풋살 관리</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @keyframes slide-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        .animate-slide-up { animation: slide-up 0.3s ease-out; }
+        .active-tab { background-color: #3b82f6 !important; color: white !important; }
+    </style>
 </head>
-<body class="bg-gray-100 min-h-screen">
+<body class="bg-gray-50 min-h-screen pb-10">
     <div class="max-w-md mx-auto p-4 space-y-4">
         
         <div class="text-center py-4">
             <h1 class="text-2xl font-black text-gray-800 flex justify-center items-center gap-2">
-                <i class="fa-solid fa-soccer-ball animate-bounce text-blue-600"></i>
-                용성전기(주) 풋살 회비 내역
+                <i class="fa-solid fa-soccer-ball text-blue-600"></i>
+                용성전기(주) 풋살 회비
             </h1>
         </div>
 
-        <div class="bg-slate-800 rounded-3xl p-6 text-white shadow-xl relative overflow-hidden">
-            <div class="relative z-10">
-                <p class="text-xs opacity-60 font-bold uppercase tracking-widest">현재 전체 잔액 (이월금 포함)</p>
-                <div class="text-4xl font-black mt-2 text-green-400" id="totalBalance">0원</div>
-                <div class="flex gap-2 mt-4">
-                    <select id="viewYear" onchange="fetchData()" class="bg-white/10 border-none rounded-lg text-sm p-1 outline-none"></select>
-                    <select id="viewMonth" onchange="fetchData()" class="bg-white/10 border-none rounded-lg text-sm p-1 outline-none"></select>
+        <div class="bg-slate-900 rounded-[2.5rem] p-8 text-white shadow-2xl relative overflow-hidden">
+            <p class="text-[10px] opacity-50 font-bold tracking-[0.2em] mb-1">TOTAL BALANCE</p>
+            <div class="text-4xl font-black text-green-400" id="totalBalance">0원</div>
+            <div class="mt-6 flex gap-2">
+                <select id="viewYear" onchange="fetchData()" class="bg-white/10 border-none rounded-lg text-xs p-2 outline-none"></select>
+                <select id="viewMonth" onchange="fetchData()" class="bg-white/10 border-none rounded-lg text-xs p-2 outline-none"></select>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-3xl p-6 shadow-sm border">
+            <h2 class="font-bold text-sm text-gray-400 mb-4 flex justify-between items-center">
+                <span><i class="fa-solid fa-clock-rotate-left mr-2"></i>누적 미납 명단</span>
+                <span class="bg-red-100 text-red-500 text-[10px] px-2 py-0.5 rounded-full" id="unpaidTotalInfo">0명</span>
+            </h2>
+            <div id="unpaidList" class="space-y-3">
                 </div>
-            </div>
-            <i class="fa-solid fa-coins absolute -right-4 -bottom-4 text-8xl opacity-10"></i>
         </div>
 
-        <div class="bg-white rounded-2xl p-5 shadow-sm border border-red-100">
-            <div class="flex justify-between items-center mb-3">
-                <h2 class="font-bold text-red-500 text-sm"><i class="fa-solid fa-triangle-exclamation mr-1"></i> 이번 달 미납자</h2>
-                <span class="text-xs text-gray-400" id="unpaidCount">0명</span>
-            </div>
-            <div id="unpaidList" class="flex flex-wrap gap-2"></div>
-        </div>
-
-        <div class="grid grid-cols-3 gap-2">
-            <button onclick="showSection('members')" class="bg-white p-3 rounded-xl shadow-sm border text-center active:scale-95 transition">
-                <i class="fa-solid fa-user-group text-blue-500 text-lg"></i>
-                <p class="text-[10px] font-bold mt-1 text-gray-600">회원관리</p>
+        <div class="grid grid-cols-3 gap-3">
+            <button onclick="showSection('members')" class="bg-white p-4 rounded-2xl shadow-sm border flex flex-col items-center active:scale-95 transition">
+                <i class="fa-solid fa-users-gear text-indigo-500 mb-1"></i>
+                <span class="text-[10px] font-bold">멤버/휴식</span>
             </button>
-            <button onclick="showSection('payment')" class="bg-white p-3 rounded-xl shadow-sm border text-center active:scale-95 transition">
-                <i class="fa-solid fa-check-double text-green-500 text-lg"></i>
-                <p class="text-[10px] font-bold mt-1 text-gray-600">회비입력</p>
+            <button onclick="showSection('payment')" class="bg-white p-4 rounded-2xl shadow-sm border flex flex-col items-center active:scale-95 transition">
+                <i class="fa-solid fa-money-check-dollar text-emerald-500 mb-1"></i>
+                <span class="text-[10px] font-bold">회비입력</span>
             </button>
-            <button onclick="showSection('income')" class="bg-white p-3 rounded-xl shadow-sm border text-center active:scale-95 transition">
-                <i class="fa-solid fa-plus-minus text-orange-500 text-lg"></i>
-                <p class="text-[10px] font-bold mt-1 text-gray-600">수입/지출</p>
+            <button onclick="showSection('income')" class="bg-white p-4 rounded-2xl shadow-sm border flex flex-col items-center active:scale-95 transition">
+                <i class="fa-solid fa-file-invoice-dollar text-orange-500 mb-1"></i>
+                <span class="text-[10px] font-bold">수입/지출</span>
             </button>
         </div>
 
-        <div class="bg-white rounded-t-3xl p-6 shadow-inner min-h-[400px]">
-            <h3 class="font-bold text-gray-700 mb-4 flex justify-between items-center">
-                <span>📅 월별 상세 내역</span>
-                <span id="monthTitle" class="text-sm bg-blue-50 text-blue-600 px-3 py-1 rounded-full font-bold"></span>
+        <div class="bg-white rounded-3xl p-6 shadow-sm border min-h-[300px]">
+            <h3 class="font-black text-gray-800 mb-5 flex justify-between items-center text-sm">
+                <span>📑 <span id="monthLabel"></span> 내역</span>
             </h3>
             <div id="monthlyLogs" class="space-y-4"></div>
         </div>
     </div>
 
-    <div id="actionSection" class="hidden fixed inset-0 bg-black/50 z-50 flex items-end">
-        <div class="bg-white w-full rounded-t-3xl p-6 animate-slide-up max-h-[90vh] overflow-y-auto">
+    <div id="actionSection" class="hidden fixed inset-0 bg-black/60 z-50 flex items-end">
+        <div class="bg-white w-full rounded-t-[2.5rem] p-8 animate-slide-up max-h-[85vh] overflow-y-auto">
             <div id="sectionContent"></div>
-            <button onclick="hideSection()" class="w-full mt-6 py-4 bg-gray-100 rounded-2xl font-bold text-gray-500">닫기</button>
+            <button onclick="hideSection()" class="w-full mt-6 py-4 bg-gray-50 rounded-2xl font-bold text-gray-400">닫기</button>
         </div>
     </div>
 
@@ -72,49 +74,46 @@
         const API_URL = 'https://script.google.com/macros/s/AKfycbz3rsxELn2976--EQv27UarheFevKKpdPskF1viJ4AvZ2-Tizc78kbbcWmopXIQsG4Azw/exec';
         let appData = {};
 
+        // 연월 세팅
         const now = new Date();
         const yearSel = document.getElementById('viewYear');
         const monthSel = document.getElementById('viewMonth');
-        
-        for(let i=2025; i<=2027; i++) {
-            yearSel.innerHTML += `<option value="${i}" ${i==now.getFullYear()?'selected':''}>${i}년</option>`;
-        }
-        for(let i=1; i<=12; i++) {
-            monthSel.innerHTML += `<option value="${i}" ${i==now.getMonth()+1?'selected':''}>${i}월</option>`;
-        }
+        for(let i=2025; i<=2026; i++) yearSel.innerHTML += `<option value="${i}" ${i==now.getFullYear()?'selected':''}>${i}년</option>`;
+        for(let i=1; i<=12; i++) monthSel.innerHTML += `<option value="${i}" ${i==now.getMonth()+1?'selected':''}>${i}월</option>`;
 
         async function fetchData() {
-            const y = yearSel.value;
-            const m = monthSel.value;
-            document.getElementById('monthTitle').innerText = `${y}년 ${m}월`;
-            
-            try {
-                const resp = await fetch(`${API_URL}?action=getData&year=${y}&month=${m}`);
-                appData = await resp.json();
-                renderUI();
-            } catch (e) {
-                console.error(e);
-            }
+            const y = yearSel.value; const m = monthSel.value;
+            document.getElementById('monthLabel').innerText = `${m}월`;
+            const resp = await fetch(`${API_URL}?action=getData&year=${y}&month=${m}`);
+            appData = await resp.json();
+            renderUI();
         }
 
         function renderUI() {
             document.getElementById('totalBalance').innerText = appData.totalBalance.toLocaleString() + '원';
-            document.getElementById('unpaidCount').innerText = `${appData.unpaidMembers.length}명`;
-            document.getElementById('unpaidList').innerHTML = appData.unpaidMembers.map(m => 
-                `<span class="bg-red-50 text-red-500 px-2 py-1 rounded text-xs font-bold border border-red-100">${m}</span>`).join('');
+            document.getElementById('unpaidTotalInfo').innerText = `${appData.unpaidSummary.length}명`;
+            
+            document.getElementById('unpaidList').innerHTML = appData.unpaidSummary.map(u => `
+                <div class="flex justify-between items-center bg-gray-50 p-3 rounded-xl border border-gray-100">
+                    <div>
+                        <span class="font-bold text-gray-700 text-sm">${u.name}</span>
+                        <p class="text-[9px] text-red-400 font-medium">${u.months.join(', ')} 미납</p>
+                    </div>
+                    <span class="bg-red-500 text-white text-[10px] px-2 py-1 rounded-lg font-bold">${u.months.length}회</span>
+                </div>
+            `).join('') || '<p class="text-center text-green-500 font-bold text-sm py-4">모든 회원 완납 중! ⚽</p>';
 
             document.getElementById('monthlyLogs').innerHTML = appData.monthlyLogs.map(l => `
                 <div class="flex justify-between items-center border-b border-gray-50 pb-3">
                     <div>
-                        <p class="text-[10px] text-gray-400 font-medium">${l.date.toString().split('T')[0]}</p>
+                        <p class="text-[10px] text-gray-400">${l.date.toString().split('T')[0]}</p>
                         <p class="font-bold text-gray-700 text-sm">${l.detail}</p>
                     </div>
-                    <div class="${l.type === '수입' ? 'text-blue-500' : 'text-red-500'} font-black text-sm text-right">
+                    <div class="${l.type === '수입' ? 'text-blue-500' : 'text-red-500'} font-black text-sm">
                         ${l.type === '수입' ? '+' : '-'}${Number(l.amount).toLocaleString()}
-                        <p class="text-[9px] opacity-40 font-normal text-gray-900">${l.type}</p>
                     </div>
                 </div>
-            `).join('') || '<p class="text-center text-gray-300 py-10 text-sm">해당 월의 내역이 없습니다.</p>';
+            `).join('') || '<p class="text-center text-gray-300 py-10 text-sm">기록이 없습니다.</p>';
         }
 
         function showSection(type) {
@@ -122,81 +121,88 @@
             const content = document.getElementById('sectionContent');
             section.classList.remove('hidden');
 
-            if (type === 'payment') {
+            if (type === 'members') {
                 content.innerHTML = `
-                    <h3 class="font-black text-xl mb-4">다중 회비 납부 체크</h3>
-                    <p class="text-xs text-gray-400 mb-4">납부한 인원을 모두 선택하고 버튼을 누르세요.</p>
-                    <div class="grid grid-cols-3 gap-2 max-h-60 overflow-y-auto mb-4" id="multiPayList">
-                        ${appData.unpaidMembers.map(m => `
-                            <label class="flex flex-col items-center p-3 border rounded-2xl has-[:checked]:bg-green-50 has-[:checked]:border-green-500 transition cursor-pointer">
-                                <input type="checkbox" name="payMember" value="${m}" class="hidden">
-                                <span class="text-sm font-bold">${m}</span>
+                    <h3 class="font-black text-xl mb-6">회원 정보 관리</h3>
+                    <div class="space-y-6">
+                        <div class="bg-blue-50 p-4 rounded-2xl">
+                            <p class="text-xs font-bold text-blue-500 mb-2">신규 회원 추가</p>
+                            <input id="newMem" class="w-full p-3 rounded-xl mb-2 border-none" placeholder="이름">
+                            <input id="joinDate" type="month" class="w-full p-3 rounded-xl mb-3 border-none" value="2025-01">
+                            <button onclick="addMem()" class="w-full bg-blue-500 text-white py-3 rounded-xl font-bold">멤버 추가</button>
+                        </div>
+                        <div class="space-y-2">
+                            <p class="text-xs font-bold text-gray-400">활동 상태 변경 (부상 등)</p>
+                            ${appData.members.map(m => `
+                                <div class="flex justify-between items-center p-3 border rounded-xl">
+                                    <span class="font-bold text-sm">${m.name} <span class="text-[10px] font-normal text-gray-400">(${m.joinDate})</span></span>
+                                    <select onchange="updateStatus('${m.name}', this.value)" class="text-xs border-none bg-gray-100 rounded-lg p-1">
+                                        <option value="활동" ${m.status==='활동'?'selected':''}>활동</option>
+                                        <option value="휴식" ${m.status==='휴식'?'selected':''}>휴식</option>
+                                    </select>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            } else if (type === 'payment') {
+                // 이번 달 미납자만 필터링해서 보여주기
+                const thisMonthStr = `${yearSel.value}-${monthSel.value}`;
+                const thisMonthUnpaid = appData.unpaidSummary.filter(u => u.months.includes(thisMonthStr));
+                content.innerHTML = `
+                    <h3 class="font-black text-xl mb-2">${monthSel.value}월 회비 체크</h3>
+                    <p class="text-xs text-gray-400 mb-6">납부한 인원을 선택하세요.</p>
+                    <div class="grid grid-cols-3 gap-2 mb-6" id="multiPayList">
+                        ${thisMonthUnpaid.map(u => `
+                            <label class="flex flex-col items-center p-4 border rounded-2xl has-[:checked]:bg-green-50 has-[:checked]:border-green-500 transition cursor-pointer">
+                                <input type="checkbox" name="payMember" value="${u.name}" class="hidden">
+                                <span class="text-sm font-bold text-gray-600">${u.name}</span>
                             </label>
                         `).join('')}
                     </div>
-                    <button onclick="submitMultiPay()" class="w-full bg-green-500 text-white py-4 rounded-2xl font-bold shadow-lg shadow-green-100">선택 완료 및 저장</button>
-                `;
-            } else if (type === 'members') {
-                content.innerHTML = `
-                    <h3 class="font-black text-xl mb-4">회원 추가/삭제</h3>
-                    <div class="flex gap-2 mb-6">
-                        <input id="newMem" class="flex-1 bg-gray-100 border-none p-4 rounded-xl outline-none" placeholder="새 회원 이름">
-                        <button onclick="addMem()" class="bg-blue-500 text-white px-6 rounded-xl font-bold">추가</button>
-                    </div>
-                    <div class="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto">
-                        ${appData.members.map(m => `
-                            <div class="flex justify-between items-center p-3 bg-gray-50 rounded-xl text-sm border">
-                                <span class="font-medium">${m}</span>
-                                <i onclick="delMem('${m}')" class="fa-solid fa-circle-minus text-red-300 cursor-pointer hover:text-red-500 transition"></i>
-                            </div>
-                        `).join('')}
-                    </div>
+                    <button onclick="submitMultiPay()" class="w-full bg-emerald-500 text-white py-4 rounded-2xl font-bold shadow-lg shadow-emerald-100 text-lg">납부 처리 완료</button>
                 `;
             } else if (type === 'income') {
                 content.innerHTML = `
-                    <h3 class="font-black text-xl mb-4">기타 입출금 기록</h3>
+                    <h3 class="font-black text-xl mb-6">기타 지출 및 수입</h3>
                     <div class="space-y-4">
                         <div class="flex gap-2">
-                            <button onclick="setTrType(this, '수입')" class="flex-1 py-4 border rounded-2xl font-bold transition tr-btn active-income">수입</button>
-                            <button onclick="setTrType(this, '지출')" class="flex-1 py-4 border rounded-2xl font-bold transition tr-btn">지출</button>
+                            <button id="btnIn" onclick="setTrType('수입')" class="flex-1 py-4 border rounded-2xl font-bold active-tab">수입</button>
+                            <button id="btnOut" onclick="setTrType('지출')" class="flex-1 py-4 border rounded-2xl font-bold">지출</button>
                         </div>
-                        <input id="trDate" type="date" class="w-full bg-gray-100 p-4 rounded-xl border-none outline-none" value="${new Date().toISOString().split('T')[0]}">
-                        <input id="trDetail" class="w-full bg-gray-100 p-4 rounded-xl border-none outline-none" placeholder="항목 (예: 음료수 구입, 찬조금)">
-                        <input id="trAmount" type="number" class="w-full bg-gray-100 p-4 rounded-xl border-none outline-none" placeholder="금액 입력">
-                        <button onclick="addTr()" class="w-full bg-slate-800 text-white py-4 rounded-2xl font-bold shadow-xl">내역 저장하기</button>
+                        <input id="trDate" type="date" class="w-full bg-gray-50 p-4 rounded-2xl border-none" value="${new Date().toISOString().split('T')[0]}">
+                        <input id="trDetail" class="w-full bg-gray-50 p-4 rounded-2xl border-none" placeholder="내역 (예: 운동장 대관료)">
+                        <input id="trAmount" type="number" class="w-full bg-gray-50 p-4 rounded-2xl border-none" placeholder="금액">
+                        <button onclick="addTr()" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold shadow-xl">저장하기</button>
                     </div>
                 `;
-                window.trType = '수입'; 
+                window.trType = '수입';
             }
-        }
-
-        function setTrType(el, type) {
-            window.trType = type;
-            document.querySelectorAll('.tr-btn').forEach(b => b.classList.remove('bg-blue-500', 'bg-red-500', 'text-white'));
-            el.classList.add(type === '수입' ? 'bg-blue-500' : 'bg-red-500');
-            el.classList.add('text-white');
-        }
-
-        async function submitMultiPay() {
-            const selected = Array.from(document.querySelectorAll('input[name="payMember"]:checked')).map(el => el.value);
-            if(selected.length === 0) return alert('납부자를 선택해주세요.');
-            if(!confirm(`${selected.join(', ')} 인원의 회비 납부를 처리할까요?`)) return;
-            await fetch(`${API_URL}?action=recordMultiPayments&names=${JSON.stringify(selected)}&year=${yearSel.value}&month=${monthSel.value}`);
-            hideSection(); fetchData();
         }
 
         async function addMem() {
             const name = document.getElementById('newMem').value;
-            if(!name) return;
-            await fetch(`${API_URL}?action=addMember&name=${name}`);
+            const date = document.getElementById('joinDate').value;
+            await fetch(`${API_URL}?action=addMember&name=${name}&joinDate=${date}`);
             hideSection(); fetchData();
         }
 
-        async function delMem(name) {
-            if(confirm(`${name} 회원을 명단에서 삭제하시겠습니까?`)) {
-                await fetch(`${API_URL}?action=deleteMember&name=${name}`);
-                hideSection(); fetchData();
-            }
+        async function updateStatus(name, status) {
+            await fetch(`${API_URL}?action=updateStatus&name=${name}&status=${status}`);
+            fetchData();
+        }
+
+        function setTrType(type) {
+            window.trType = type;
+            document.getElementById('btnIn').classList.toggle('active-tab', type==='수입');
+            document.getElementById('btnOut').classList.toggle('active-tab', type==='지출');
+        }
+
+        async function submitMultiPay() {
+            const selected = Array.from(document.querySelectorAll('input[name="payMember"]:checked')).map(el => el.value);
+            if(selected.length === 0) return alert('납부자를 선택하세요.');
+            await fetch(`${API_URL}?action=recordMultiPayments&names=${JSON.stringify(selected)}&year=${yearSel.value}&month=${monthSel.value}`);
+            hideSection(); fetchData();
         }
 
         async function addTr() {
@@ -204,7 +210,6 @@
             const detail = document.getElementById('trDetail').value;
             const amount = document.getElementById('trAmount').value;
             const date = document.getElementById('trDate').value;
-            if(!detail || !amount) return alert('내용과 금액을 입력하세요.');
             await fetch(`${API_URL}?action=addTransaction&type=${type}&detail=${detail}&amount=${amount}&date=${date}`);
             hideSection(); fetchData();
         }
@@ -212,10 +217,5 @@
         function hideSection() { document.getElementById('actionSection').classList.add('hidden'); }
         window.onload = fetchData;
     </script>
-    <style>
-        @keyframes slide-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
-        .animate-slide-up { animation: slide-up 0.3s ease-out; }
-        .active-income { background-color: #3b82f6; color: white; }
-    </style>
 </body>
 </html>
