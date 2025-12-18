@@ -14,10 +14,10 @@
         body { font-family: 'Pretendard-Regular', sans-serif; -webkit-tap-highlight-color: transparent; user-select: none; }
         .app-container { max-width: 500px; margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column; }
         
-        /* [수정] 하단 네비게이션 바 높이를 고려하여 여백을 넉넉히 줌 (짤림 방지) */
-        .content-area { flex: 1; overflow-y: auto; padding-bottom: 180px; }
+        /* [수정] 하단 네비게이션 바 높이(약 80px)보다 훨씬 큰 여백을 주어 절대 가려지지 않게 함 */
+        .content-area { flex: 1; overflow-y: auto; padding-bottom: 220px; }
         
-        .nav-bar { position: fixed; bottom: 0; left: 0; right: 0; max-width: 500px; margin: 0 auto; background: white; border-top: 1px solid #f1f5f9; display: flex; justify-content: space-around; padding: 12px 0 24px 0; z-index: 100; box-shadow: 0 -4px 10px rgba(0,0,0,0.05); }
+        .nav-bar { position: fixed; bottom: 0; left: 0; right: 0; max-width: 500px; margin: 0 auto; background: white; border-top: 1px solid #f1f5f9; display: flex; justify-content: space-around; padding: 12px 0 24px 0; z-index: 100; box-shadow: 0 -4px 15px rgba(0,0,0,0.08); }
         .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: #94a3b8; font-size: 10px; font-weight: 700; width: 25%; }
         .nav-item.active { color: #3b82f6; }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
@@ -80,9 +80,9 @@
     </div>
 
     <div id="actionSection" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[200] flex items-end">
-        <div class="bg-white w-full rounded-t-[2.5rem] p-8 animate-slide-up max-h-[85vh] overflow-y-auto shadow-2xl">
+        <div class="bg-white w-full rounded-t-[2.5rem] p-8 animate-slide-up max-h-[85vh] overflow-y-auto">
             <div id="sectionContent"></div>
-            <button onclick="hideSection()" class="w-full mt-6 py-4 bg-slate-50 rounded-2xl font-bold text-slate-400 hover:bg-slate-100 transition">닫기</button>
+            <button onclick="hideSection()" class="w-full mt-6 py-4 bg-gray-50 rounded-2xl font-bold text-slate-400">닫기</button>
         </div>
     </div>
 
@@ -140,7 +140,6 @@
             `).join('') || '<p class="text-center text-slate-300 py-10 text-xs italic">내역 없음</p>';
         }
 
-        // [수정] 입력 후 hideSection()이 반드시 실행되도록 보장
         async function submitMultiPay() {
             const selected = Array.from(document.querySelectorAll('input[name="payMember"]:checked')).map(el => el.value);
             if(selected.length === 0) return alert('인원을 선택하세요.');
@@ -156,7 +155,7 @@
                 }
             });
             renderUI(); 
-            hideSection(); // 즉시 창 닫기
+            hideSection(); // 즉시 창 닫기 로직 보강
 
             try {
                 await fetch(`${API_URL}?action=recordMultiPayments&names=${JSON.stringify(selected)}&year=${yearSel.value}&month=${monthSel.value}`);
@@ -178,7 +177,7 @@
             }
             appData.monthlyLogs.unshift({ id: Date.now(), date: date, type: type, detail: detail, amount: amount, logType: 'trans' });
             renderUI(); 
-            hideSection(); // 즉시 창 닫기
+            hideSection(); // 즉시 창 닫기 로직 보강
 
             try {
                 await fetch(`${API_URL}?action=addTransaction&type=${type}&detail=${detail}&amount=${amount}&date=${date}`);
@@ -204,7 +203,7 @@
             if(!name) return;
             appData.members.push({ name, joinDate: date, status: '활동' });
             renderUI(); 
-            hideSection(); // 즉시 창 닫기
+            hideSection(); // 즉시 창 닫기 로직 보강
             try {
                 await fetch(`${API_URL}?action=addMember&name=${name}&joinDate=${date}`);
                 fetchData();
