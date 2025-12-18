@@ -3,98 +3,118 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>풋살 회비 관리 시스템</title>
+    <title>용성전기(주) 풋살 회비 관리</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
-<body class="bg-slate-50 min-h-screen pb-20">
+<body class="bg-gray-100 min-h-screen">
     <div class="max-w-md mx-auto p-4 space-y-4">
         
-        <div class="bg-gradient-to-br from-indigo-600 to-blue-500 rounded-3xl p-6 text-white shadow-xl">
-            <h1 class="text-sm font-medium opacity-90">현재 총 잔액</h1>
-            <div class="text-4xl font-black mt-2" id="balance">0원</div>
-            <div class="mt-6 flex justify-between items-center bg-white/10 rounded-2xl p-4">
-                <div>
-                    <p class="text-[10px] uppercase tracking-wider opacity-70">이번 달 미납</p>
-                    <p class="text-lg font-bold text-yellow-300"><span id="unpaidCount">0</span>명</p>
+        <div class="text-center py-4">
+            <h1 class="text-2xl font-black text-gray-800 flex justify-center items-center gap-2">
+                <i class="fa-solid fa-soccer-ball animate-bounce text-blue-600"></i>
+                용성전기(주) 풋살 회비 내역
+            </h1>
+        </div>
+
+        <div class="bg-slate-800 rounded-3xl p-6 text-white shadow-xl relative overflow-hidden">
+            <div class="relative z-10">
+                <p class="text-xs opacity-60 font-bold uppercase tracking-widest">현재 전체 잔액 (이월금 포함)</p>
+                <div class="text-4xl font-black mt-2 text-green-400" id="totalBalance">0원</div>
+                <div class="flex gap-2 mt-4">
+                    <select id="viewYear" onchange="fetchData()" class="bg-white/10 border-none rounded-lg text-sm p-1 outline-none"></select>
+                    <select id="viewMonth" onchange="fetchData()" class="bg-white/10 border-none rounded-lg text-sm p-1 outline-none"></select>
                 </div>
-                <button onclick="fetchData()" class="bg-white/20 hover:bg-white/30 p-2 rounded-full transition">
-                    <i class="fa-solid fa-rotate text-sm"></i>
-                </button>
             </div>
+            <i class="fa-solid fa-coins absolute -right-4 -bottom-4 text-8xl opacity-10"></i>
         </div>
 
-        <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-            <h2 class="text-sm font-bold text-gray-400 uppercase tracking-widest mb-3 flex items-center">
-                <i class="fa-solid fa-circle-exclamation text-red-500 mr-2"></i>미납 명단
-            </h2>
-            <div id="unpaidList" class="flex flex-wrap gap-2 text-sm">
-                <span class="text-gray-400 italic">데이터를 불러오는 중...</span>
+        <div class="bg-white rounded-2xl p-5 shadow-sm border border-red-100">
+            <div class="flex justify-between items-center mb-3">
+                <h2 class="font-bold text-red-500 text-sm"><i class="fa-solid fa-triangle-exclamation mr-1"></i> 이번 달 미납자</h2>
+                <span class="text-xs text-gray-400" id="unpaidCount">0명</span>
             </div>
+            <div id="unpaidList" class="flex flex-wrap gap-2"></div>
         </div>
 
-        <div class="grid grid-cols-2 gap-3">
-            <button onclick="showSection('members')" class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center">
-                <div class="w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center mb-2">
-                    <i class="fa-solid fa-users text-blue-500"></i>
-                </div>
-                <span class="text-xs font-bold text-gray-600">회원 관리</span>
+        <div class="grid grid-cols-3 gap-2">
+            <button onclick="showSection('members')" class="bg-white p-3 rounded-xl shadow-sm border text-center active:scale-95 transition">
+                <i class="fa-solid fa-user-group text-blue-500 text-lg"></i>
+                <p class="text-[10px] font-bold mt-1 text-gray-600">회원관리</p>
             </button>
-            <button onclick="showSection('payment')" class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center">
-                <div class="w-10 h-10 bg-green-50 rounded-full flex items-center justify-center mb-2">
-                    <i class="fa-solid fa-won-sign text-green-500"></i>
-                </div>
-                <span class="text-xs font-bold text-gray-600">회비 납부</span>
+            <button onclick="showSection('payment')" class="bg-white p-3 rounded-xl shadow-sm border text-center active:scale-95 transition">
+                <i class="fa-solid fa-check-double text-green-500 text-lg"></i>
+                <p class="text-[10px] font-bold mt-1 text-gray-600">회비입력</p>
             </button>
-            <button onclick="showSection('income')" class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center">
-                <div class="w-10 h-10 bg-orange-50 rounded-full flex items-center justify-center mb-2">
-                    <i class="fa-solid fa-arrow-down-long text-orange-500"></i>
-                </div>
-                <span class="text-xs font-bold text-gray-600">수입/지출</span>
-            </button>
-            <button onclick="showSection('history')" class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center">
-                <div class="w-10 h-10 bg-purple-50 rounded-full flex items-center justify-center mb-2">
-                    <i class="fa-solid fa-list-ul text-purple-500"></i>
-                </div>
-                <span class="text-xs font-bold text-gray-600">전체 내역</span>
+            <button onclick="showSection('income')" class="bg-white p-3 rounded-xl shadow-sm border text-center active:scale-95 transition">
+                <i class="fa-solid fa-plus-minus text-orange-500 text-lg"></i>
+                <p class="text-[10px] font-bold mt-1 text-gray-600">수입/지출</p>
             </button>
         </div>
 
-        <div id="actionSection" class="hidden bg-white rounded-2xl p-6 shadow-2xl border border-gray-200 fixed inset-x-4 bottom-20 z-50">
+        <div class="bg-white rounded-t-3xl p-6 shadow-inner min-h-[400px]">
+            <h3 class="font-bold text-gray-700 mb-4 flex justify-between items-center">
+                <span>📅 월별 상세 내역</span>
+                <span id="monthTitle" class="text-sm bg-blue-50 text-blue-600 px-3 py-1 rounded-full font-bold"></span>
+            </h3>
+            <div id="monthlyLogs" class="space-y-4"></div>
+        </div>
+    </div>
+
+    <div id="actionSection" class="hidden fixed inset-0 bg-black/50 z-50 flex items-end">
+        <div class="bg-white w-full rounded-t-3xl p-6 animate-slide-up max-h-[90vh] overflow-y-auto">
             <div id="sectionContent"></div>
-            <button onclick="hideSection()" class="mt-4 w-full py-3 text-gray-400 text-sm font-medium">닫기</button>
+            <button onclick="hideSection()" class="w-full mt-6 py-4 bg-gray-100 rounded-2xl font-bold text-gray-500">닫기</button>
         </div>
     </div>
 
     <script>
-        // 1. 배포한 구글 웹 앱 URL을 여기에 입력하세요
         const API_URL = 'https://script.google.com/macros/s/AKfycbz3rsxELn2976--EQv27UarheFevKKpdPskF1viJ4AvZ2-Tizc78kbbcWmopXIQsG4Azw/exec';
-
         let appData = {};
 
+        const now = new Date();
+        const yearSel = document.getElementById('viewYear');
+        const monthSel = document.getElementById('viewMonth');
+        
+        for(let i=2025; i<=2027; i++) {
+            yearSel.innerHTML += `<option value="${i}" ${i==now.getFullYear()?'selected':''}>${i}년</option>`;
+        }
+        for(let i=1; i<=12; i++) {
+            monthSel.innerHTML += `<option value="${i}" ${i==now.getMonth()+1?'selected':''}>${i}월</option>`;
+        }
+
         async function fetchData() {
+            const y = yearSel.value;
+            const m = monthSel.value;
+            document.getElementById('monthTitle').innerText = `${y}년 ${m}월`;
+            
             try {
-                const response = await fetch(`${API_URL}?action=getData`);
-                appData = await response.json();
+                const resp = await fetch(`${API_URL}?action=getData&year=${y}&month=${m}`);
+                appData = await resp.json();
                 renderUI();
-            } catch (e) { alert('데이터 로드 실패: ' + e); }
+            } catch (e) {
+                console.error(e);
+            }
         }
 
         function renderUI() {
-            document.getElementById('balance').innerText = appData.balance.toLocaleString() + '원';
-            document.getElementById('unpaidCount').innerText = appData.unpaidMembers.length;
-            
-            const unpaidHtml = appData.unpaidMembers.length > 0 
-                ? appData.unpaidMembers.map(m => `<span class="bg-red-50 text-red-500 px-3 py-1.5 rounded-lg font-medium border border-red-100">${m}</span>`).join('')
-                : '<span class="text-green-500 font-bold">이번 달 완납! ⚽</span>';
-            document.getElementById('unpaidList').innerHTML = unpaidHtml;
-        }
+            document.getElementById('totalBalance').innerText = appData.totalBalance.toLocaleString() + '원';
+            document.getElementById('unpaidCount').innerText = `${appData.unpaidMembers.length}명`;
+            document.getElementById('unpaidList').innerHTML = appData.unpaidMembers.map(m => 
+                `<span class="bg-red-50 text-red-500 px-2 py-1 rounded text-xs font-bold border border-red-100">${m}</span>`).join('');
 
-        async function runAction(params) {
-            const query = new URLSearchParams(params).toString();
-            await fetch(`${API_URL}?${query}`);
-            hideSection();
-            fetchData();
+            document.getElementById('monthlyLogs').innerHTML = appData.monthlyLogs.map(l => `
+                <div class="flex justify-between items-center border-b border-gray-50 pb-3">
+                    <div>
+                        <p class="text-[10px] text-gray-400 font-medium">${l.date.toString().split('T')[0]}</p>
+                        <p class="font-bold text-gray-700 text-sm">${l.detail}</p>
+                    </div>
+                    <div class="${l.type === '수입' ? 'text-blue-500' : 'text-red-500'} font-black text-sm text-right">
+                        ${l.type === '수입' ? '+' : '-'}${Number(l.amount).toLocaleString()}
+                        <p class="text-[9px] opacity-40 font-normal text-gray-900">${l.type}</p>
+                    </div>
+                </div>
+            `).join('') || '<p class="text-center text-gray-300 py-10 text-sm">해당 월의 내역이 없습니다.</p>';
         }
 
         function showSection(type) {
@@ -102,58 +122,100 @@
             const content = document.getElementById('sectionContent');
             section.classList.remove('hidden');
 
-            if (type === 'members') {
+            if (type === 'payment') {
                 content.innerHTML = `
-                    <h3 class="font-bold mb-4">회원 추가/삭제</h3>
-                    <input id="memName" class="w-full border p-3 rounded-xl mb-3" placeholder="이름 입력">
-                    <button onclick="runAction({action:'addMember', name:document.getElementById('memName').value})" class="w-full bg-blue-500 text-white py-3 rounded-xl font-bold mb-4">추가하기</button>
-                    <div class="max-h-40 overflow-y-auto space-y-2">
-                        ${appData.members.map(m => `
-                            <div class="flex justify-between items-center p-2 bg-gray-50 rounded-lg text-sm">
-                                <span>${m}</span>
-                                <button onclick="runAction({action:'deleteMember', name:'${m}'})" class="text-red-400 px-2 italic text-xs">삭제</button>
-                            </div>
+                    <h3 class="font-black text-xl mb-4">다중 회비 납부 체크</h3>
+                    <p class="text-xs text-gray-400 mb-4">납부한 인원을 모두 선택하고 버튼을 누르세요.</p>
+                    <div class="grid grid-cols-3 gap-2 max-h-60 overflow-y-auto mb-4" id="multiPayList">
+                        ${appData.unpaidMembers.map(m => `
+                            <label class="flex flex-col items-center p-3 border rounded-2xl has-[:checked]:bg-green-50 has-[:checked]:border-green-500 transition cursor-pointer">
+                                <input type="checkbox" name="payMember" value="${m}" class="hidden">
+                                <span class="text-sm font-bold">${m}</span>
+                            </label>
                         `).join('')}
                     </div>
+                    <button onclick="submitMultiPay()" class="w-full bg-green-500 text-white py-4 rounded-2xl font-bold shadow-lg shadow-green-100">선택 완료 및 저장</button>
                 `;
-            } else if (type === 'payment') {
+            } else if (type === 'members') {
                 content.innerHTML = `
-                    <h3 class="font-bold mb-4">이번 달 회비 납부 확인</h3>
-                    <div class="grid grid-cols-3 gap-2">
-                        ${appData.unpaidMembers.map(m => `
-                            <button onclick="runAction({action:'recordPayment', name:'${m}'})" class="bg-green-50 text-green-600 p-2 rounded-lg text-xs font-bold border border-green-200">${m}</button>
+                    <h3 class="font-black text-xl mb-4">회원 추가/삭제</h3>
+                    <div class="flex gap-2 mb-6">
+                        <input id="newMem" class="flex-1 bg-gray-100 border-none p-4 rounded-xl outline-none" placeholder="새 회원 이름">
+                        <button onclick="addMem()" class="bg-blue-500 text-white px-6 rounded-xl font-bold">추가</button>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto">
+                        ${appData.members.map(m => `
+                            <div class="flex justify-between items-center p-3 bg-gray-50 rounded-xl text-sm border">
+                                <span class="font-medium">${m}</span>
+                                <i onclick="delMem('${m}')" class="fa-solid fa-circle-minus text-red-300 cursor-pointer hover:text-red-500 transition"></i>
+                            </div>
                         `).join('')}
                     </div>
                 `;
             } else if (type === 'income') {
                 content.innerHTML = `
-                    <h3 class="font-bold mb-4">기타 수입/지출 기록</h3>
-                    <select id="trType" class="w-full border p-3 rounded-xl mb-2">
-                        <option value="수입">수입 (찬조금 등)</option>
-                        <option value="지출">지출 (대관료/음료 등)</option>
-                    </select>
-                    <input id="trDetail" class="w-full border p-3 rounded-xl mb-2" placeholder="항목명">
-                    <input id="trAmount" type="number" class="w-full border p-3 rounded-xl mb-3" placeholder="금액">
-                    <button onclick="runAction({action:'addTransaction', type:document.getElementById('trType').value, detail:document.getElementById('trDetail').value, amount:document.getElementById('trAmount').value})" class="w-full bg-orange-500 text-white py-3 rounded-xl font-bold">기록하기</button>
-                `;
-            } else if (type === 'history') {
-                content.innerHTML = `
-                    <h3 class="font-bold mb-4">최근 내역 (15건)</h3>
-                    <div class="space-y-3 text-xs overflow-y-auto max-h-60">
-                        ${appData.recentTransactions.map(t => `
-                            <div class="flex justify-between border-b pb-2">
-                                <span class="text-gray-400">${t[0]}</span>
-                                <span class="font-bold">${t[2]}</span>
-                                <span class="${t[1] === '수입' ? 'text-blue-500' : 'text-red-500'}">${t[1] === '수입' ? '+' : '-'}${Number(t[3]).toLocaleString()}</span>
-                            </div>
-                        `).join('')}
+                    <h3 class="font-black text-xl mb-4">기타 입출금 기록</h3>
+                    <div class="space-y-4">
+                        <div class="flex gap-2">
+                            <button onclick="setTrType(this, '수입')" class="flex-1 py-4 border rounded-2xl font-bold transition tr-btn active-income">수입</button>
+                            <button onclick="setTrType(this, '지출')" class="flex-1 py-4 border rounded-2xl font-bold transition tr-btn">지출</button>
+                        </div>
+                        <input id="trDate" type="date" class="w-full bg-gray-100 p-4 rounded-xl border-none outline-none" value="${new Date().toISOString().split('T')[0]}">
+                        <input id="trDetail" class="w-full bg-gray-100 p-4 rounded-xl border-none outline-none" placeholder="항목 (예: 음료수 구입, 찬조금)">
+                        <input id="trAmount" type="number" class="w-full bg-gray-100 p-4 rounded-xl border-none outline-none" placeholder="금액 입력">
+                        <button onclick="addTr()" class="w-full bg-slate-800 text-white py-4 rounded-2xl font-bold shadow-xl">내역 저장하기</button>
                     </div>
                 `;
+                window.trType = '수입'; 
             }
+        }
+
+        function setTrType(el, type) {
+            window.trType = type;
+            document.querySelectorAll('.tr-btn').forEach(b => b.classList.remove('bg-blue-500', 'bg-red-500', 'text-white'));
+            el.classList.add(type === '수입' ? 'bg-blue-500' : 'bg-red-500');
+            el.classList.add('text-white');
+        }
+
+        async function submitMultiPay() {
+            const selected = Array.from(document.querySelectorAll('input[name="payMember"]:checked')).map(el => el.value);
+            if(selected.length === 0) return alert('납부자를 선택해주세요.');
+            if(!confirm(`${selected.join(', ')} 인원의 회비 납부를 처리할까요?`)) return;
+            await fetch(`${API_URL}?action=recordMultiPayments&names=${JSON.stringify(selected)}&year=${yearSel.value}&month=${monthSel.value}`);
+            hideSection(); fetchData();
+        }
+
+        async function addMem() {
+            const name = document.getElementById('newMem').value;
+            if(!name) return;
+            await fetch(`${API_URL}?action=addMember&name=${name}`);
+            hideSection(); fetchData();
+        }
+
+        async function delMem(name) {
+            if(confirm(`${name} 회원을 명단에서 삭제하시겠습니까?`)) {
+                await fetch(`${API_URL}?action=deleteMember&name=${name}`);
+                hideSection(); fetchData();
+            }
+        }
+
+        async function addTr() {
+            const type = window.trType;
+            const detail = document.getElementById('trDetail').value;
+            const amount = document.getElementById('trAmount').value;
+            const date = document.getElementById('trDate').value;
+            if(!detail || !amount) return alert('내용과 금액을 입력하세요.');
+            await fetch(`${API_URL}?action=addTransaction&type=${type}&detail=${detail}&amount=${amount}&date=${date}`);
+            hideSection(); fetchData();
         }
 
         function hideSection() { document.getElementById('actionSection').classList.add('hidden'); }
         window.onload = fetchData;
     </script>
+    <style>
+        @keyframes slide-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        .animate-slide-up { animation: slide-up 0.3s ease-out; }
+        .active-income { background-color: #3b82f6; color: white; }
+    </style>
 </body>
 </html>
